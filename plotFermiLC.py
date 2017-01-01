@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 
+# needs packages:
+# matplotlib, astropy, wget 
+
 from __future__ import print_function
 from __future__ import division
 

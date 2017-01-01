@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# needs packages:
+# astroquery (built on astropy), requests, BeautifulSoup, lxml
 
 ############################################################################################
 
