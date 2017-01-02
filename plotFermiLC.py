@@ -19,10 +19,13 @@ import sys
 import argparse
 desc="""Download and plot Fermi-LAT light curves. 
 Only data points are plotted - upper limits are ignored.
-Note: the Fermi lightcurve names have all spaces removed and 
-are in upper case - thus giving names like "cta 102" will
-automatically be translated to "CTA102". Also, the y-axis scaling
-is set by the range of fluxes in the entire file.""" 
+Note: the Fermi lightcurve names have all spaces removed, 
+thus giving names like "CTA 102" will automatically be 
+translated to "CTA102". The filenames are case sensitive and must
+match what is on the LAT web site. Also, the y-axis scaling
+is set by the range of fluxes in the entire file.
+
+Note: LAT Crab flux > 100 MeV is: ~2.75e-6 ph cm^-2 s^-1""" 
 
 parser = argparse.ArgumentParser(description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -57,11 +60,11 @@ cfg = parser.parse_args()
 
 # remove spaces in object names to match LAT LC filenames.
 object=cfg.name.replace(" ","")
-FITS=object.upper()
+
 if cfg.weekly: 
-    FITS+='_604800.lc'
+    FITS=object+'_604800.lc'
 else:
-    FITS+='_86400.lc'
+    FITS=object+'_86400.lc'
 
 
 ##############################################################
