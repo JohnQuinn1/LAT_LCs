@@ -9,7 +9,8 @@ import argparse
 
 desc="""Script to scrape Fermi-LAT LC web site to get list
 of monitored sources and also query NED to see if 
-extragalactic and to get their redshifts.
+extragalactic and to get their redshifts. NED query
+is SLOW so it can be turned off.
 If the redshift of an object is -1 then it was not found
 in the NED database (probably galactic) and if the redshift is '0'
 then it was found in NED but the redshift is unknown."""
@@ -18,20 +19,29 @@ then it was found in NED but the redshift is unknown."""
 
 parser = argparse.ArgumentParser(description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('-F', '--File', type=str, default="",  help='save results in comma-separated format to given filename')
+parser.add_argument('-f', '--file', type=str, default="",  help='save results in comma-separated format to given filename')
 
-parser.add_argument('-D', '--DecInterval',type=float, nargs=2, metavar=("Dec. low", "Dec. high"),
+parser.add_argument('-d', '--DecInterval',type=float, nargs=2, metavar=("Dec. low", "Dec. high"),
                     default=(-90,+90), help='Declination interval in degrees.')
 
-parser.add_argument('-R', '--RAInterval',type=float, nargs=2, metavar=("RA. low", "RA. high"),
+parser.add_argument('-r', '--RAInterval',type=float, nargs=2, metavar=("RA. low", "RA. high"),
                     default=(0,360), help='RA interval in degrees.')
 
 parser.add_argument('-z','--zInterval',type=float, nargs=2, metavar=("z low", "z high"),
                     default=(-1000,1000), help='redshift interval.')
 
+parser.add_argument('-n','--no_ned', action='store_true', help='do not query NED')
+
+parser.add_argument('-m','--mod_date', action='store_true', help='print date "Data last modified" and quit')
+
 parser.add_argument('-v','--verbose', action='store_true', help='print out to screen')
 
 cfg = parser.parse_args()
+
+if not cfg.verbose and not cfg.file and not cfg.mod_date:
+    parser.error("Please select options -v and/or -f or -m. Option -h for detailed help.")
+
+
 
 
 ############################################################################################
@@ -48,7 +58,7 @@ def filter(RA, Dec, z, cfg):
 
 ############################################################################################
 
-
+import sys
 from astroquery.ned import Ned
 from astroquery.exceptions import RemoteServiceError
 
@@ -61,6 +71,21 @@ if cfg.verbose: print("Successfully downloaded:",URL)
 
 from bs4 import BeautifulSoup
 soup=BeautifulSoup(page.content,'lxml')
+
+
+
+##### Get last modified date
+if cfg.verbose: print("Searching document for data modification date...")
+for p in soup.find_all("p"):
+    ptxt=p.get_text()
+    if ptxt.find('Data last modified:') >=0: 
+        # find() returns index, which can be 0 but evaluates to false as a bool
+        dlm=ptxt[ptxt.find(":")+2:]
+        print(dlm)
+        sys.exit()
+
+
+##### Process the table....
 
 table=soup.find("table")
 
@@ -91,23 +116,29 @@ for row in table.findAll("tr"):
         ra=float(t[t.find('(RA')+5:t.find(',')])
         dec=float(t[t.find(', Dec')+7:t.find(')')])
 
-        if cfg.verbose: print("Found LAT LC for:",name,"now quering NED...", end="")
+        if cfg.verbose: 
+            print("Found LAT LC for:",name, end="")
+
+            if not cfg.no_ned:
+                print(". Now quering NED...", end="", flush=True)
 
 
         # Now query NED...
-
-        try:
-            q=Ned.query_object(name)
-            nedz=q['Redshift']
-            if nedz.mask: # True if invalid/data missing (i.e. redshift missing)
-                z=0.0
-                if cfg.verbose: print("found! no z!, assigning 0.0")
-            else:
-                z=float(nedz)
-                if cfg.verbose: print("found! z=",z)
-        except RemoteServiceError: # i.e. object not found
-            if cfg.verbose: print("not found! assigning z=-1")
-            z=-1
+        if cfg.no_ned:
+            z=0
+        else:
+            try:
+                q=Ned.query_object(name)
+                nedz=q['Redshift']
+                if nedz.mask: # True if invalid/data missing (i.e. redshift missing)
+                    z=0.0
+                    if cfg.verbose: print("found! no z!, assigning 0.0")
+                else:
+                    z=float(nedz)
+                    if cfg.verbose: print("found! z=",z)
+            except RemoteServiceError: # i.e. object not found
+                if cfg.verbose: print("not found! assigning z=-1")
+                z=-1
             
         if filter(ra,dec,z,cfg):
 #            if cfg.verbose: print(name,"accepted by filter")
@@ -132,9 +163,9 @@ if cfg.verbose:
     for name, ra, dec, z in zip(names, ras, decs, zs):
         print("{name:{maxw}s} {ra:8.3f}  {dec:7.3f}  {z:7.4f}".format(name=name, maxw=maxw,ra=ra, dec=dec, z=z))
 
-if cfg.File:
+if cfg.file:
     if cfg.verbose: print("Saving to",cfg.File)
-    with open(cfg.File,"w") as f:
+    with open(cfg.file,"w") as f:
         for name, ra, dec, z in zip(names, ras, decs, zs):
             f.write("{}, {},  {},  {}, \n".format(name, ra, dec, z))
         
