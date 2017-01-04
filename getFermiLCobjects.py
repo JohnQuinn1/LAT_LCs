@@ -75,14 +75,16 @@ soup=BeautifulSoup(page.content,'lxml')
 
 
 ##### Get last modified date
-if cfg.verbose: print("Searching document for data modification date...")
-for p in soup.find_all("p"):
-    ptxt=p.get_text()
-    if ptxt.find('Data last modified:') >=0: 
-        # find() returns index, which can be 0 but evaluates to false as a bool
-        dlm=ptxt[ptxt.find(":")+2:]
-        print(dlm)
-        sys.exit()
+
+if cfg.mod_date:
+    if cfg.verbose: print("Searching document for data modification date...")
+    for p in soup.find_all("p"):
+        ptxt=p.get_text()
+        if ptxt.find('Data last modified:') >=0: 
+            # find() returns index, which can be 0 but evaluates to false as a bool
+            dlm=ptxt[ptxt.find(":")+2:]
+            print(dlm)
+            sys.exit()
 
 
 ##### Process the table....
