@@ -48,6 +48,8 @@ parser.add_argument('-n','--no_png', action='store_true', help="don't save png f
 parser.add_argument('-e','--energy_range', type=str, choices=['FLUX_1000_300000', 'FLUX_300_1000', 'FLUX_100_300000'],
                     default='FLUX_100_300000', help='choose energy range')
 
+parser.add_argument('-l','--load_mjds', type=str, default="", help="load 2-column ascii file of MJDs for plotting.")
+
 parser.add_argument('name',type=str, help='name of object to be downloaded')
 
 
@@ -173,6 +175,21 @@ plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 #plt.axis(ymax=0.8e-5)
 plt.grid()
+
+
+
+if cfg.load_mjds:
+    
+    ymjd=np.mean(plt.gca().get_ylim())  # get axes y limits and mid point
+
+    if cfg.verbose: print("Loading MJDs from",cfg.load_mjds)
+    mjds_start,mjds_end=np.loadtxt(cfg.load_mjds,unpack=True)
+    mjd_mid=(mjds_start+mjds_end) /2
+
+    for start,end in zip(mjds_start, mjds_end):
+        plt.plot([start, end],[ymjd, ymjd],'r-')
+        plt.plot(mjd_mid,np.ones(len(mjd_mid))*ymjd,'r.')
+
 
 
 if not cfg.no_png:
