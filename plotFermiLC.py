@@ -169,8 +169,8 @@ plt.ylabel('{} '.format(F)+'($ph\,cm^{-2}\,s^{-1}$)')
 plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 ax=plt.gca()
 ax.yaxis.major.formatter._useMathText=True
-tmax=int(max(t)+dx[-1]+1.5)
 tmin=int(max(t)-cfg.days)
+tmax=int(max(t)+dx[-1]-tmin)*1.05+tmin
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 #plt.axis(ymax=0.8e-5)
