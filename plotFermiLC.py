@@ -27,37 +27,78 @@ is set by the range of fluxes in the entire file.
 
 Note: LAT Crab flux > 100 MeV is: ~2.75e-6 ph cm^-2 s^-1""" 
 
-parser = argparse.ArgumentParser(description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description=desc, 
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('-d','--days', type=int, default=100, help="recent number of days to plot")
+parser.add_argument('-d','--days', 
+                    type=int, 
+                    default=100, 
+                    help="recent number of days to plot, a value of 0 plots all")
 
-parser.add_argument('-r','--remove_FITS', action='store_true', help='remove FITS file after processing')
+parser.add_argument('-r','--remove_FITS', 
+                    action='store_true', 
+                    help='remove FITS file after processing')
 
-parser.add_argument('-a','--already_downloaded', action='store_true', help="use already-downloaded FITS file - don't redownload")
+parser.add_argument('-a','--already_downloaded', 
+                    action='store_true', 
+                    help="use already-downloaded FITS file - don't redownload")
 
-parser.add_argument('-w','--weekly', action='store_true', help='download and plot weekly light curve instead of daily')
+parser.add_argument('-w','--weekly', 
+                    action='store_true', 
+                    help='download and plot weekly light curve instead of daily')
 
-parser.add_argument('-c','--column_info', action='store_true', help='print column info from FITS file')
+parser.add_argument('-c','--column_info', 
+                    action='store_true', 
+                    help='print column info from FITS file')
 
-parser.add_argument('-s','--stdout', action='store_true', help='print data to std out')
+parser.add_argument('-s','--stdout', 
+                    action='store_true', 
+                    help='print data to std out')
 
-parser.add_argument('-p','--plot_window', action='store_true', help='open plot window (otherwise plot produced just on disk')
-
-parser.add_argument('-n','--no_png', action='store_true', help="don't save png file")
-
-parser.add_argument('-e','--energy_range', type=str, choices=['FLUX_1000_300000', 'FLUX_300_1000', 'FLUX_100_300000'],
-                    default='FLUX_100_300000', help='choose energy range')
-
-parser.add_argument('-l','--load_mjds', type=str, default="", help="load 2-column ascii file of MJDs for plotting.")
-
-parser.add_argument('name',type=str, help='name of object to be downloaded')
+parser.add_argument('-p','--plot_window', 
+                    action='store_true', 
+                    help='open plot window (otherwise plot produced just on disk')
 
 
-parser.add_argument('-v', '--verbose', action='store_true', help='show what is going on')
+parser.add_argument('-n','--no_png', 
+                    action='store_true', 
+                    help="don't save png file")
+
+parser.add_argument('-e','--energy_range', 
+                    type=str, 
+                    choices=['FLUX_1000_300000', 'FLUX_300_1000', 'FLUX_100_300000'],
+                    default='FLUX_100_300000', 
+                    help='choose energy range')
+
+parser.add_argument('-l','--load_mjds', 
+                    type=str, 
+                    default="", 
+                    help="load 2-column ascii file of MJDs for plotting.")
+
+parser.add_argument('name',
+                    type=str, 
+                    help='name of object to be downloaded')
+
+
+parser.add_argument('-q', '--quiet', 
+                    action='store_true', 
+                    help='no printing of what is going on')
+
+
+parser.add_argument('-C', '--Crab_flux',
+                    action='store_true',
+                    help='plot a horizontal line indicating the mean Crab Nebula flux')
+
+
+parser.add_argument('-A', '--Average',
+                    action='store_true',
+                    help=("plot a horizontal line indicating the object's average flux"
+                          " (calculated from the data excluding upper limits)"))
+
 
 cfg = parser.parse_args()
 
-
+Crab_fluxes={'FLUX_1000_300000':0, 'FLUX_300_1000':0, 'FLUX_100_300000':2.75e-6}
 
 
 # remove spaces in object names to match LAT LC filenames.
@@ -75,12 +116,12 @@ else:
 import os
 
 if cfg.already_downloaded:
-    if cfg.verbose: print("Using downloaded",FITS)
+    if not cfg.quiet: print("Using downloaded",FITS)
     
 else:
     import wget
 
-    if cfg.verbose:
+    if not cfg.quiet:
         bar_style=wget.bar_adaptive
     else:
         bar_style=None
@@ -88,14 +129,14 @@ else:
 
     # Daily
     if os.path.isfile(FITS):
-        if cfg.verbose: print("Removing old file:",FITS)
+        if not cfg.quiet: print("Removing old file:",FITS)
         os.remove(FITS)
 
-    if cfg.verbose: print("Downloading latest daily file:",FITS)
+    if not cfg.quiet: print("Downloading latest daily file:",FITS)
 
     remote_file='http://fermi.gsfc.nasa.gov/FTP/glast/data/lat/catalogs/asp/current/lightcurves/'+FITS
 
-    if cfg.verbose: print("wget:",remote_file)
+    if not cfg.quiet: print("wget:",remote_file)
 
     try:
         from urllib.error import HTTPError # just so I can catch and handle this exception
@@ -109,7 +150,7 @@ else:
         raise
         
 
-    if cfg.verbose: print()
+    if not cfg.quiet: print()
 
 
 ##############################################################
@@ -153,7 +194,7 @@ i=np.where(ulf==False)
 
 
 if cfg.stdout:
-    if cfg.verbose:
+    if not cfg.quiet:
         print("Printing data to stdout:")
         print("{:8s}  {:4s}  {:8s}  {:8s}".format("MJD_mid", "dMJD", "Flux", "Flux_err"))
     for j in i[0]: # where returns a tuple of arrays so the first element is the array!
@@ -169,7 +210,12 @@ plt.ylabel('{} '.format(F)+'($ph\,cm^{-2}\,s^{-1}$)')
 plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 ax=plt.gca()
 ax.yaxis.major.formatter._useMathText=True
-tmin=int(max(t)-cfg.days)
+
+if cfg.days>0:
+    tmin=int(max(t)-cfg.days)
+else:
+    tmin=min(t)
+
 tmax=int(max(t)+dx[-1]-tmin)*1.05+tmin
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
@@ -177,12 +223,25 @@ plt.axis(xmax=tmax)
 plt.grid()
 
 
+if cfg.Crab_flux:
+    cf=Crab_fluxes[F]  # F previously defined as selection of flux energy range
+    if not cfg.quiet:
+        print("Plotting Crab flux {}: {} ph cm-2 s-1".format(F,cf))
+    plt.plot([tmin,tmax], [cf,cf],'g-')
 
-if cfg.load_mjds:
-    
+
+if cfg.Average:
+    af=np.mean(f[i])  # F previously defined as selection of flux energy range
+    if not cfg.quiet:
+        print("Plotting object average flux {}: {:.2e} ph cm-2 s-1".format(F,af))
+    plt.plot([tmin,tmax], [af,af],'b-')
+
+
+
+
+if cfg.load_mjds:    
     ymjd=np.mean(plt.gca().get_ylim())  # get axes y limits and mid point
-
-    if cfg.verbose: print("Loading MJDs from",cfg.load_mjds)
+    if not cfg.quiet: print("Loading MJDs from",cfg.load_mjds)
     mjds_start,mjds_end=np.loadtxt(cfg.load_mjds,unpack=True)
     mjd_mid=(mjds_start+mjds_end) /2
 
@@ -194,7 +253,7 @@ if cfg.load_mjds:
 
 if not cfg.no_png:
     pngfile=object+"_"+timescale+"_"+F+".png"
-    if cfg.verbose: print("Saving",pngfile)
+    if not cfg.quiet: print("Saving",pngfile)
     plt.savefig(pngfile)
 
 
@@ -204,6 +263,6 @@ if cfg.plot_window:
 
 
 if cfg.remove_FITS:
-    if cfg.verbose: print("Removing",FITS)
+    if not cfg.quiet: print("Removing",FITS)
     os.remove(FITS)
 

@@ -17,29 +17,51 @@ then it was found in NED but the redshift is unknown."""
 
 
 
-parser = argparse.ArgumentParser(description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description=desc, 
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('-f', '--file', type=str, default="",  help='save results in comma-separated format to given filename')
+parser.add_argument('-f', '--file', 
+                    type=str, 
+                    default="",  
+                    help='save results in comma-separated format to given filename')
 
-parser.add_argument('-d', '--DecInterval',type=float, nargs=2, metavar=("Dec. low", "Dec. high"),
-                    default=(-90,+90), help='Declination interval in degrees.')
+parser.add_argument('-d', '--DecInterval',
+                    type=float, 
+                    nargs=2, 
+                    metavar=("Dec. low", "Dec. high"),
+                    default=(-90,+90), 
+                    help='Declination interval in degrees.')
 
-parser.add_argument('-r', '--RAInterval',type=float, nargs=2, metavar=("RA. low", "RA. high"),
-                    default=(0,360), help='RA interval in degrees.')
+parser.add_argument('-r', '--RAInterval',
+                    type=float, 
+                    nargs=2, 
+                    metavar=("RA. low", "RA. high"),
+                    default=(0,360), 
+                    help='RA interval in degrees.')
 
-parser.add_argument('-z','--zInterval',type=float, nargs=2, metavar=("z low", "z high"),
-                    default=(-1000,1000), help='redshift interval.')
+parser.add_argument('-z','--zInterval',
+                    type=float, 
+                    nargs=2, 
+                    metavar=("z low", "z high"),
+                    default=(-1000,1000), 
+                    help='redshift interval.')
 
-parser.add_argument('-n','--no_ned', action='store_true', help='do not query NED')
+parser.add_argument('-n','--no_ned', 
+                    action='store_true', 
+                    help='do not query NED')
 
-parser.add_argument('-m','--mod_date', action='store_true', help='print date "Data last modified" and quit')
+parser.add_argument('-m','--mod_date', 
+                    action='store_true', 
+                    help='print date "Data last modified" and quit')
 
-parser.add_argument('-v','--verbose', action='store_true', help='print out to screen')
+parser.add_argument('-q','--quiet', 
+                    action='store_true', 
+                    help='print out to screen')
 
 cfg = parser.parse_args()
 
-if not cfg.verbose and not cfg.file and not cfg.mod_date:
-    parser.error("Please select options -v and/or -f or -m. Option -h for detailed help.")
+#if not cfg.verbose and not cfg.file and not cfg.mod_date:
+#    parser.error("Please select options -v and/or -f or -m. Option -h for detailed help.")
 
 
 
@@ -66,7 +88,7 @@ from astroquery.exceptions import RemoteServiceError
 import requests
 URL='http://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/'
 page=requests.get(URL)
-if cfg.verbose: print("Successfully downloaded:",URL)
+if not cfg.quiet: print("Successfully downloaded:",URL)
 
 
 from bs4 import BeautifulSoup
@@ -77,7 +99,7 @@ soup=BeautifulSoup(page.content,'lxml')
 ##### Get last modified date
 
 if cfg.mod_date:
-    if cfg.verbose: print("Searching document for data modification date...")
+    if not.quiet: print("Searching document for data modification date...")
     for p in soup.find_all("p"):
         ptxt=p.get_text()
         if ptxt.find('Data last modified:') >=0: 
@@ -118,7 +140,7 @@ for row in table.findAll("tr"):
         ra=float(t[t.find('(RA')+5:t.find(',')])
         dec=float(t[t.find(', Dec')+7:t.find(')')])
 
-        if cfg.verbose: 
+        if not cfg.quiet: 
             print("Found LAT LC for:",name, end="")
 
             if not cfg.no_ned:
@@ -134,23 +156,21 @@ for row in table.findAll("tr"):
                 nedz=q['Redshift']
                 if nedz.mask: # True if invalid/data missing (i.e. redshift missing)
                     z=0.0
-                    if cfg.verbose: print("found! no z!, assigning 0.0")
+                    if not cfg.quiet: print("found! no z!, assigning 0.0")
                 else:
                     z=float(nedz)
-                    if cfg.verbose: print("found! z=",z)
+                    if not cfg.quiet: print("found! z=",z)
             except RemoteServiceError: # i.e. object not found
-                if cfg.verbose: print("not found! assigning z=-1")
+                if not cfg.quiet: print("not found! assigning z=-1")
                 z=-1
             
         if filter(ra,dec,z,cfg):
-#            if cfg.verbose: print(name,"accepted by filter")
             names.append(name)
             ras.append(ra)
             decs.append(dec)
             zs.append(z)
             naccepted+=1
         else:
- #           if cfg.verbose:print(name,"rejected by filter")
             pass
 
 
@@ -159,14 +179,14 @@ for row in table.findAll("tr"):
 maxw=max([len(name) for name in names])
 
 
-if cfg.verbose:
+if not cfg.quiet:
     print()
     print("Accepted",naccepted,"of",nobjects,"objects:")
     for name, ra, dec, z in zip(names, ras, decs, zs):
         print("{name:{maxw}s} {ra:8.3f}  {dec:7.3f}  {z:7.4f}".format(name=name, maxw=maxw,ra=ra, dec=dec, z=z))
 
 if cfg.file:
-    if cfg.verbose: print("Saving to",cfg.File)
+    if cfg.quiet: print("Saving to",cfg.File)
     with open(cfg.file,"w") as f:
         for name, ra, dec, z in zip(names, ras, decs, zs):
             f.write("{}, {},  {},  {}, \n".format(name, ra, dec, z))
