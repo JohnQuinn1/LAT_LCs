@@ -98,7 +98,7 @@ parser.add_argument('-A', '--Average',
 
 cfg = parser.parse_args()
 
-Crab_fluxes={'FLUX_1000_300000':0, 'FLUX_300_1000':0, 'FLUX_100_300000':2.75e-6}
+Crab_fluxes={'FLUX_1000_300000':1.8e-7, 'FLUX_300_1000':5.74e-7, 'FLUX_100_300000':2.75e-6}
 
 
 # remove spaces in object names to match LAT LC filenames.
