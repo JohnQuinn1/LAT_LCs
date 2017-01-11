@@ -99,7 +99,7 @@ soup=BeautifulSoup(page.content,'lxml')
 ##### Get last modified date
 
 if cfg.mod_date:
-    if not.quiet: print("Searching document for data modification date...")
+    if not quiet: print("Searching document for data modification date...")
     for p in soup.find_all("p"):
         ptxt=p.get_text()
         if ptxt.find('Data last modified:') >=0: 
