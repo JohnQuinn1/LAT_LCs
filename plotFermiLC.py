@@ -217,6 +217,7 @@ else:
     tmin=min(t)
 
 tmax=int(max(t)+dx[-1]-tmin)*1.05+tmin
+tmin=tmin - (tmax-tmin)*0.05
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 #plt.axis(ymax=0.8e-5)
