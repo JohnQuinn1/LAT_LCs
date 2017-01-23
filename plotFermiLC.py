@@ -222,6 +222,9 @@ plt.axis(xmax=tmax)
 #plt.axis(ymax=0.8e-5)
 plt.grid()
 
+# prevent axes from being displayed as, for example,  5.773e4 + offset
+plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
+
 
 if cfg.Crab_flux:
     cf=Crab_fluxes[F]  # F previously defined as selection of flux energy range
