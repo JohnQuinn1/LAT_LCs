@@ -75,6 +75,11 @@ parser.add_argument('-l','--load_mjds',
                     default="", 
                     help="load 2-column ascii file of MJDs for plotting.")
 
+parser.add_argument('-S','--Swift', 
+                    type=str, 
+                    default="", 
+                    help="load Swift data in lightcurve.txt ('overall') format for plotting")
+
 parser.add_argument('name',
                     type=str, 
                     help='name of object to be downloaded')
@@ -222,8 +227,12 @@ plt.axis(xmax=tmax)
 #plt.axis(ymax=0.8e-5)
 plt.grid()
 
+
+
 # prevent axes from being displayed as, for example,  5.773e4 + offset
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
+
+
 
 
 if cfg.Crab_flux:
@@ -251,6 +260,23 @@ if cfg.load_mjds:
     for start,end in zip(mjds_start, mjds_end):
         plt.plot([start, end],[ymjd, ymjd],'r-')
         plt.plot(mjd_mid,np.ones(len(mjd_mid))*ymjd,'r.')
+
+
+if cfg.Swift:    
+    if not cfg.quiet: print("Loading Swift data from",cfg.Swift)
+    swift_data=np.loadtxt(cfg.Swift, skiprows=23)
+    swift_mjd=swift_data[:,0]
+    swift_dmjd=swift_data[:,1]
+    swift_rate=swift_data[:,2]
+    swift_raterr=swift_data[:,3]
+    ax2=plt.gca().twinx()
+    ax2.errorbar(swift_mjd, swift_rate, xerr=swift_dmjd, yerr=swift_raterr,fmt='go')
+    ax2.set_ylabel('Swift XRT cts/s.', color='g')
+    ax2.tick_params('y', colors='g')
+
+plt.axis(xmin=tmin)
+plt.axis(xmax=tmax)
+
 
 
 
