@@ -3,20 +3,20 @@ import sys
 import wget
 
 class SwiftLC:
-"""
-Class for dowloading Swift lightcurves ('Overall Light Curve')
+    """
+    Class for dowloading Swift lightcurves ('Overall Light Curve')
 
-Example usage:
+    Example usage:
 
-In [1]: import SwiftLC
+    In [1]: import SwiftLC
 
-In [2]: sw=SwiftLC.SwiftLC()
+    In [2]: sw=SwiftLC.SwiftLC()
 
-In [3]: sw.download("Mrk501")
-Downloading latest file: http://www.swift.psu.edu/monitoring/data/Mrk501/lightcurve.txt
-100% [..............................................................................] 45425 / 45425
-Renaming lightcurve.txt to Swift_Mrk501.txt
-"""
+    In [3]: sw.download("Mrk501")
+    Downloading latest file: http://www.swift.psu.edu/monitoring/data/Mrk501/lightcurve.txt
+    100% [..............................................................................] 45425 / 45425
+    Renaming lightcurve.txt to Swift_Mrk501.txt
+    """
 
     def __init__(self,quiet=False):
         self.quiet=quiet
@@ -73,7 +73,11 @@ Renaming lightcurve.txt to Swift_Mrk501.txt
 
 
     def download(self,name):
-        """Download and rename the file for the given object"""
+        """
+        Download and rename the file for the given object.
+        Returns true if download successful or false if file not found.
+        Unknown what happens if error, for example, connecting to server.
+        """
         
         if not self.quiet:
             bar_style=wget.bar_adaptive
@@ -97,8 +101,7 @@ Renaming lightcurve.txt to Swift_Mrk501.txt
         except HTTPError as e:
             if not self.quiet:
                 print(e)
-                print("Exiting...")
-            sys.exit(1)
+            return False
         except:
             if not self.quiet:
                 print("Some error occurred...")
@@ -111,7 +114,7 @@ Renaming lightcurve.txt to Swift_Mrk501.txt
             print("Renaming",filename,'to',new_filename)
         os.rename(filename,new_filename)
 
-        return
+        return True
          
 
          
