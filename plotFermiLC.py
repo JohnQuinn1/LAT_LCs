@@ -60,7 +60,7 @@ parser.add_argument('-p','--plot_window',
                     help='open plot window (otherwise plot produced just on disk')
 
 
-parser.add_argument('-n','--no_png', 
+parser.add_argument('-N','--no_png', 
                     action='store_true', 
                     help="don't save png file")
 
@@ -80,8 +80,9 @@ parser.add_argument('-S','--Swift',
                     default="", 
                     help="load Swift data in lightcurve.txt ('overall') format for plotting")
 
-parser.add_argument('name',
-                    type=str, 
+parser.add_argument('-n','--name',
+                    type=str,
+                    required=True,
                     help='name of object to be downloaded')
 
 
