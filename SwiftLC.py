@@ -75,7 +75,7 @@ class SwiftLC:
     def download(self,name):
         """
         Download and rename the file for the given object.
-        Returns true if download successful or false if file not found.
+        Returns filename if download successful or None if file not found.
         Unknown what happens if error, for example, connecting to server.
         """
         
@@ -101,7 +101,7 @@ class SwiftLC:
         except HTTPError as e:
             if not self.quiet:
                 print(e)
-            return False
+            return None
         except:
             if not self.quiet:
                 print("Some error occurred...")
@@ -114,7 +114,7 @@ class SwiftLC:
             print("Renaming",filename,'to',new_filename)
         os.rename(filename,new_filename)
 
-        return True
+        return new_filename
          
 
          
