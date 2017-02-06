@@ -35,8 +35,8 @@ parser.add_argument('-n','--name',type=str, default="",
 Need another option as well to print some field""")
 
 
-parser.add_argument('-o','--overview', action='store_true',
-                    help="print object overview from catalogue")
+parser.add_argument('-a','--all_fields', action='store_true',
+                    help="print all fields from catalogue for object")
 
 parser.add_argument("-f","--field", type=str,
                    help="Print selected field (e.g. 'Powerlaw_Index'] from cataloge for object")
@@ -54,11 +54,17 @@ parser.add_argument('-t','--type', action='store_true',
                     help="prints the spectral type: either PowerLaw, LogParabola, or PLExpCutoff.")
 
 
-parser.add_argument('-i','--integral_flux', 
+parser.add_argument('-I','--integral_flux', 
                     type=float, 
                     nargs=2, 
                     metavar=("E_lower_MeV","E_upper_MeV"),
-                    help=("print the PL-calculated 300-1000 MeV flux (ph cm^-2 s^-1) in energy range"))
+                    help=("print the best-model numerically integrated flux (ph cm^-2 s^-1) in energy range"))
+
+parser.add_argument('-P','--PL_integral_flux', 
+                    type=float, 
+                    nargs=2, 
+                    metavar=("E_lower_MeV","E_upper_MeV"),
+                    help=("print the PL-calculated integrated flux (ph cm^-2 s^-1) in energy range"))
 
 
 cfg = parser.parse_args()
@@ -108,7 +114,7 @@ if not cfg.name:
 
 cat.select_object(cfg.name, field=cfg.Name_field)
 
-if cfg.overview:
+if cfg.all_fields:
     field_names=cat.get_field_names()
     fields=cat.get_all_fields()
     
@@ -130,6 +136,10 @@ if cfg.powerlaw:
 
 if cfg.integral_flux:
     print(cat.calc_int_flux(cfg.integral_flux[0], cfg.integral_flux[1]))
+
+
+if cfg.PL_integral_flux:
+    print(cat.calc_PL_int_flux(cfg.PL_integral_flux[0], cfg.PL_integral_flux[1]))
 
 #        print(i,n)
 #        src_name=tbdata['Source_Name'][i]
