@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import numpy as np
 
+
+import map_names
+
 import sys
 #if len(sys.argv) = 2:
 #    print("Usage: {} 'object name'".format(sys.argv[0]))
@@ -98,8 +101,8 @@ parser.add_argument('-C', '--Crab_flux',
 
 parser.add_argument('-A', '--Average',
                     action='store_true',
-                    help=("plot a horizontal line indicating the object's average flux"
-                          " (calculated from the data excluding upper limits)"))
+                    help=("plot a horizontal line indicating the object's 3FGL average flux"
+                          " (calculated by numericaly integrating 3FGL spectral model)"))
 
 
 cfg = parser.parse_args()
@@ -108,7 +111,9 @@ Crab_fluxes={'FLUX_1000_300000':1.8e-7, 'FLUX_300_1000':5.74e-7, 'FLUX_100_30000
 
 
 # remove spaces in object names to match LAT LC filenames.
-object=cfg.name.replace(" ","")
+#object=cfg.name.replace(" ","")
+
+object=map_names.map_name_to_LATLC(cfg.name)
 
 if cfg.weekly: 
     FITS=object+'_604800.lc'
@@ -209,6 +214,8 @@ if cfg.stdout:
 
 plt.clf()
 plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='o')
+
+
 timescale= "weekly" if cfg.weekly else "daily"
 plt.title('{} Fermi-LAT {} light curve'.format(object,timescale))
 plt.xlabel('MJD')
@@ -225,6 +232,7 @@ else:
 tmax=int(max(t)+dx[-1]-tmin)*1.05+tmin
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
+plt.axis(ymin=0)
 #plt.axis(ymax=0.8e-5)
 plt.grid()
 
@@ -232,6 +240,13 @@ plt.grid()
 
 # prevent axes from being displayed as, for example,  5.773e4 + offset
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
+
+
+# Plot the upper limits
+ii=np.where(ulf==True)
+ymin,ymax=plt.ylim()
+ulsize=(ymax-ymin)/40
+plt.errorbar(t[ii],f[ii],yerr=ulsize, uplims=True, xerr=dx[ii],fmt='r.', alpha=0.1)
 
 
 
@@ -244,10 +259,22 @@ if cfg.Crab_flux:
 
 
 if cfg.Average:
-    af=np.mean(f[i])  # F previously defined as selection of flux energy range
+    import Cat3FGL
+    cat=Cat3FGL.Cat3FGL()
+    cat.select_object(map_names.map_name_to_LATASSOC1(cfg.name))
+
+    if F=='FLUX_100_300000':
+        flux3FGL=cat.calc_int_flux(100,300000)
+    elif F=='FLUX_300_1000':
+        flux3FGL=cat.calc_int_flux(300,1000)
+    elif F=='FLUX_1000_300000':
+        flux3FGL=cat.calc_int_flux(1000,300000)
+    
+
     if not cfg.quiet:
-        print("Plotting object average flux {}: {:.2e} ph cm-2 s-1".format(F,af))
-    plt.plot([tmin,tmax], [af,af],'b-')
+        print("Plotting object average flux {}: {:.2e} ph cm-2 s-1".format(F,flux3FGL))
+
+    plt.plot([tmin,tmax], [flux3FGL,flux3FGL],'b-')
 
 
 
@@ -256,7 +283,7 @@ if cfg.load_mjds:
     ymjd=np.mean(plt.gca().get_ylim())  # get axes y limits and mid point
     if not cfg.quiet: print("Loading MJDs from",cfg.load_mjds)
     mjds_start,mjds_end=np.loadtxt(cfg.load_mjds,unpack=True)
-    mjd_mid=(mjds_start+mjds_end) /2
+    mjd_mid=(mjds_start+mjds_end)/2
 
     for start,end in zip(mjds_start, mjds_end):
         plt.plot([start, end],[ymjd, ymjd],'r-')
@@ -274,6 +301,8 @@ if cfg.Swift:
     ax2.errorbar(swift_mjd, swift_rate, xerr=swift_dmjd, yerr=swift_raterr,fmt='go')
     ax2.set_ylabel('Swift XRT cts/s.', color='g')
     ax2.tick_params('y', colors='g')
+    if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]:
+        tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.05+tmin
 
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
