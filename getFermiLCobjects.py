@@ -32,12 +32,18 @@ parser.add_argument('-d', '--DecInterval',
                     default=(-90,+90), 
                     help='Declination interval in degrees.')
 
+parser.add_argument('-w', '--windowRA',
+                    type=float, 
+                    default=0, 
+                    help='RA window around current Az Sid. @ midnight interval in hours.')
+
 parser.add_argument('-r', '--RAInterval',
                     type=float, 
                     nargs=2, 
                     metavar=("RA. low", "RA. high"),
                     default=(0,360), 
                     help='RA interval in degrees.')
+
 
 parser.add_argument('-z','--zInterval',
                     type=float, 
@@ -68,10 +74,45 @@ cfg = parser.parse_args()
 
 ############################################################################################
 
+
 ############################################################################################
 
+def make_RA_window(half_window):
+    """returns start and end window (in degrees) of RA window centered on
+       Az Sid @ midnight time for today. half_window is a float number indicating the 
+       number of hours either side of the center """
+
+    from datetime import datetime
+
+    half_window*=15  # hours to convert to degrees
+ 
+    RA_center = datetime.now().timetuple().tm_yday /365 * 360 + 90  
+    # Jan 1 has local sidereal time at midnight of ~6 hrs
+
+    RA_lower=RA_center-half_window
+    if RA_lower<0: RA_lower=RA_lower+360
+
+    RA_upper=RA_center+half_window
+    if RA_upper>360: RA_upper=RA_upper-360
+
+    return RA_lower, RA_upper
+
+############################################################################################
+
+
+
+############################################################################################
+
+
 def filter(RA, Dec, z, cfg):
-    if (cfg.RAInterval[0] <= RA <= cfg.RAInterval[1]):
+
+    if cfg.windowRA:
+        RA_lower, RA_upper = make_RA_window(cfg.windowRA)
+    else:
+        RA_lower = cfg.RAInterval[0]
+        RA_upper = cfg.RAInterval[1]
+
+    if (RA_lower <= RA <= RA_upper):
         if(cfg.DecInterval[0] <= Dec <= cfg.DecInterval[1]):
             if(cfg.zInterval[0] <= z <= cfg.zInterval[1]):
                 return True
@@ -141,10 +182,12 @@ for row in table.findAll("tr"):
         dec=float(t[t.find(', Dec')+7:t.find(')')])
 
         if not cfg.quiet: 
-            print("Found LAT LC for:",name, end="")
+            print("Found LAT LC for {:20s}".format(name+":"), end="")
 
-            if not cfg.no_ned:
-                print(". Now quering NED...", end="", flush=True)
+            if cfg.no_ned:
+                print()
+            else:
+                print("Now quering NED...", end="", flush=True)
 
 
         # Now query NED...
@@ -163,6 +206,7 @@ for row in table.findAll("tr"):
             except RemoteServiceError: # i.e. object not found
                 if not cfg.quiet: print("not found! assigning z=-1")
                 z=-1
+
             
         if filter(ra,dec,z,cfg):
             names.append(name)
@@ -186,7 +230,7 @@ if not cfg.quiet:
         print("{name:{maxw}s} {ra:8.3f}  {dec:7.3f}  {z:7.4f}".format(name=name, maxw=maxw,ra=ra, dec=dec, z=z))
 
 if cfg.file:
-    if cfg.quiet: print("Saving to",cfg.File)
+    if not cfg.quiet: print("Saving to",cfg.File)
     with open(cfg.file,"w") as f:
         for name, ra, dec, z in zip(names, ras, decs, zs):
             f.write("{}, {},  {},  {}, \n".format(name, ra, dec, z))
