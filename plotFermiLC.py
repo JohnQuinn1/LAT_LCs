@@ -84,9 +84,12 @@ parser.add_argument('-l','--load_mjds',
 #                    help="load Swift data in lightcurve.txt ('overall') format for plotting")
 
 parser.add_argument('-S','--Swift', 
-                    action='store_true', 
+                    nargs="?",
+                    const="get", 
                     default="", 
-                    help="download Swift data in lightcurve.txt ('overall') format, rename and plot")
+                    help=("give filename for  Swift data in lightcurve.txt ('overall') format "
+                          "to be plotted. If no filename is given the lightcurve txt file will "
+                          "be downloaded and renamed from the Switf site"))
 
 parser.add_argument('-n','--name',
                     type=str,
@@ -111,6 +114,8 @@ parser.add_argument('-A', '--Average',
 
 
 cfg = parser.parse_args()
+
+print(cfg)
 
 Crab_fluxes={'FLUX_1000_300000':1.8e-7, 'FLUX_300_1000':5.74e-7, 'FLUX_100_300000':2.75e-6}
 
@@ -296,14 +301,17 @@ if cfg.load_mjds:
 
 
 if cfg.Swift:
-    import SwiftLC
-    SLC=SwiftLC.SwiftLC(quiet=cfg.quiet)
-    res=SLC.download(object)
-    if res is None:
-        if not cfg.quiet: print("Could not download Swift lightcurve for", object)
-    else:
-        if not cfg.quiet: print("Loading Swift data from",res)
-        swift_data=np.loadtxt(res, skiprows=23)
+    swift_file=cfg.Swift
+    if swift_file=="get": # "-S given w/o file so must download
+        import SwiftLC
+        SLC=SwiftLC.SwiftLC(quiet=cfg.quiet)
+        swift_file=SLC.download(object)
+
+    if swift_file is None:
+        if not cfg.quiet: print("Could not download Swift lightcurve for", object)            
+    else:  # "-S given w file so use
+        if not cfg.quiet: print("Loading Swift data from",swift_file)
+        swift_data=np.loadtxt(swift_file, skiprows=23)
         swift_mjd=swift_data[:,0]
         swift_dmjd=swift_data[:,1]
         swift_rate=swift_data[:,2]
