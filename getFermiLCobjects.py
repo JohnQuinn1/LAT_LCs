@@ -23,7 +23,8 @@ parser = argparse.ArgumentParser(description=desc,
 parser.add_argument('-f', '--file', 
                     type=str, 
                     default="",  
-                    help='save results in comma-separated format to given filename')
+                    help=('save results in comma-separated format to given filename '
+                          ' with format: name, URL, ra, dec, z')
 
 parser.add_argument('-d', '--DecInterval',
                     type=float, 
@@ -152,15 +153,20 @@ if cfg.mod_date:
 
 ##### Process the table....
 
-table=soup.find("table")
+
+URL="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/"
 
 names=[]
 ras=[]
 decs=[]
 zs=[]
+links=[]
 
 nobjects=0
 naccepted=0
+
+table=soup.find("table")
+
 
 for row in table.findAll("tr"):
     cells=row.findAll("td")
@@ -170,6 +176,8 @@ for row in table.findAll("tr"):
 
     if(len(cells)==3):
         nobjects+=1
+
+        link=URL+cells[0].find('a').get('href')
 
         t=cells[0].getText()
 
@@ -213,6 +221,7 @@ for row in table.findAll("tr"):
             ras.append(ra)
             decs.append(dec)
             zs.append(z)
+            links.append(link)
             naccepted+=1
         else:
             pass
@@ -230,10 +239,10 @@ if not cfg.quiet:
         print("{name:{maxw}s} {ra:8.3f}  {dec:7.3f}  {z:7.4f}".format(name=name, maxw=maxw,ra=ra, dec=dec, z=z))
 
 if cfg.file:
-    if not cfg.quiet: print("Saving to",cfg.File)
+    if not cfg.quiet: print("Saving to",cfg.file)
     with open(cfg.file,"w") as f:
-        for name, ra, dec, z in zip(names, ras, decs, zs):
-            f.write("{}, {},  {},  {}, \n".format(name, ra, dec, z))
+        for name, link, ra, dec, z in zip(names, links, ras, decs, zs):
+            f.write("{}, {}, {},  {},  {}, \n".format(name, link, ra, dec, z))
         
 
     

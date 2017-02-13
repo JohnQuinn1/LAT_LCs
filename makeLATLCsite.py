@@ -13,8 +13,8 @@ import subprocess
 # 
 # LAT LCs:
 # - get list of objects
-# - make folder for each object
 # - for each object:
+# - - make folder for each object
 # - - change to folder
 # - - download LAT LC for object 
 # - - download swift LC for each object
@@ -71,15 +71,22 @@ DEC_max=32+50
 RA_window=7
 z_min=0
 z_max=1.5
-command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File, DEC_min, DEC_max, RA_window, z_min, z_max)
+command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File, 
+                                                                       DEC_min, 
+                                                                       DEC_max, 
+                                                                       RA_window, 
+                                                                       z_min, 
+                                                                       z_max)
 
-print(command)
-res=subprocess.call(command, shell=True)
-print(res)
+#print(command)
+#res=subprocess.call(command, shell=True)
+#print(res)
 
 ###########################################################################
 
 # load txt file and extract names etc...
+
+LC_File="test.txt"
 
 objects={}
 
@@ -87,10 +94,64 @@ with open(LC_File,"r") as f:
     for line in f:
         fields=line.split(",")
         object=fields[0].replace(" ","")
-        objects[object]=(fields[1], fields[2], fields[3]) # RA, Dec, Redshift
-
-print(objects)
+        objects[object]=(fields[1], fields[2], fields[3], fields[4]) # URL, RA, Dec, Redshift
         
+
+#print(objects)
+        
+
+###########################################################################
+
+# Loop over each object...
+
+import map_name
+import glob
+
+import SwiftLC
+SLC=SwiftLC.SwiftLC(quiet=True)
+
+for name in objects:
+    print()
+    print(name)
+    print()
+
+    # if directpry does not exist make it
+    if not os.path.isdir(name):
+        if os.path.isfile(name):
+            os.remove(name)
+        os.mkdir(name)
+
+    os.chdir(name)
+
+    for lc_file in glob.glob("*.lc"):
+        os.remove(lc_file)
+
+    for png_file in glob.glob("*.png"):
+        os.remove(png_file)
+
+
+    Swift_LC_file=SLC.download(name)
+
+    # Daily 100 MeV to 300 GeV
+    command="plotFermiLC.py -A -a -n {} -e {} -q -N".format(name, "FLUX_100_300000")
+    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
+    res=subprocess.check_output(command, shell=True).decode('utf-8')
+
+    # Daily 1 GeV to 300 GeV
+    command="plotFermiLC.py -A -a -n {} -e {} -q -N".format(name, "FLUX_1000_300000")   
+    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
+    res=subprocess.check_output(command, shell=True).decode('utf-8')
+
+    os.chdir("..")
+
+
+
+
+
+     
+
+
+            
 
 
 

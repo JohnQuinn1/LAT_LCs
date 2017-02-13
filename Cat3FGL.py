@@ -175,8 +175,8 @@ class Cat3FGL:
 
         import scipy.integrate as integrate
         result=integrate.quad(self.spectral_model,E_low_MeV, E_high_MeV)
-        if result[0]/result[1] < 10:
-            print("Warning, large error:",*result)
+#        if result[0]/result[1] < 10:
+#            print("Warning, large error:",*result)
         return result[0]
 
 

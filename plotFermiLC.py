@@ -44,7 +44,7 @@ parser.add_argument('-r','--remove_FITS',
 
 parser.add_argument('-a','--already_downloaded', 
                     action='store_true', 
-                    help="use already-downloaded FITS file - don't redownload")
+                    help="use already-downloaded FITS file if it exists- otherwise redownload")
 
 parser.add_argument('-w','--weekly', 
                     action='store_true', 
@@ -63,9 +63,16 @@ parser.add_argument('-p','--plot_window',
                     help='open plot window (otherwise plot produced just on disk')
 
 
-parser.add_argument('-N','--no_png', 
+parser.add_argument('-N','--png', 
                     action='store_true', 
-                    help="don't save png file")
+                    help="save PNG file")
+
+
+
+parser.add_argument('-P','--pdf', 
+                    action='store_true', 
+                    help="save PDF image")
+
 
 parser.add_argument('-e','--energy_range', 
                     type=str, 
@@ -115,8 +122,6 @@ parser.add_argument('-A', '--Average',
 
 cfg = parser.parse_args()
 
-print(cfg)
-
 Crab_fluxes={'FLUX_1000_300000':1.8e-7, 'FLUX_300_1000':5.74e-7, 'FLUX_100_300000':2.75e-6}
 
 
@@ -136,7 +141,7 @@ else:
 
 import os
 
-if cfg.already_downloaded:
+if cfg.already_downloaded and os.path.exists(FITS):
     if not cfg.quiet: print("Using downloaded",FITS)
     
 else:
@@ -214,12 +219,24 @@ t=51910+x/(60*60*24)  # convert mission secs to MJD
 i=np.where(ulf==False)
 
 
-if cfg.stdout:
-    if not cfg.quiet:
-        print("Printing data to stdout:")
-        print("{:8s}  {:4s}  {:8s}  {:8s}".format("MJD_mid", "dMJD", "Flux", "Flux_err"))
-    for j in i[0]: # where returns a tuple of arrays so the first element is the array!
-        print("{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}".format(t[j], dx[j], f[j], fe[j]))
+#############################################################
+
+import Cat3FGL
+cat=Cat3FGL.Cat3FGL(quiet=cfg.quiet)
+cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
+
+if F=='FLUX_100_300000':
+    flux_3FGL=cat.calc_int_flux(100,300000)
+elif F=='FLUX_300_1000':
+    flux_3FGL=cat.calc_int_flux(300,1000)
+elif F=='FLUX_1000_300000':
+    flux_3FGL=cat.calc_int_flux(1000,300000)
+
+flux_3FGL_gt_200GeV=cat.calc_int_flux(200000,50000000)
+flux_crab_gt_200GeV=2.36e-10
+
+#############################################################
+
 
 
 plt.clf()
@@ -237,9 +254,9 @@ ax.yaxis.major.formatter._useMathText=True
 if cfg.days>0:
     tmin=int(max(t)-cfg.days)
 else:
-    tmin=min(t)
+    tmin=min(t)-(max(t)-min(t))*0.02
 
-tmax=int(max(t)+dx[-1]-tmin)*1.05+tmin
+tmax=int(max(t)+dx[-1]-tmin)*1.02+tmin
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 plt.axis(ymin=0)
@@ -256,9 +273,7 @@ plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 ii=np.where(ulf==True)
 ymin,ymax=plt.ylim()
 ulsize=(ymax-ymin)/40
-plt.errorbar(t[ii],f[ii],yerr=ulsize, uplims=True, xerr=dx[ii],fmt='r.', alpha=0.1)
-
-
+plt.errorbar(t[ii],f[ii],yerr=ulsize, uplims=True, xerr=dx[ii],fmt='b.', alpha=0.1)
 
 
 if cfg.Crab_flux:
@@ -268,23 +283,12 @@ if cfg.Crab_flux:
     plt.plot([tmin,tmax], [cf,cf],'g-')
 
 
+
 if cfg.Average:
-    import Cat3FGL
-    cat=Cat3FGL.Cat3FGL(quiet=cfg.quiet)
-    cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
-
-    if F=='FLUX_100_300000':
-        flux3FGL=cat.calc_int_flux(100,300000)
-    elif F=='FLUX_300_1000':
-        flux3FGL=cat.calc_int_flux(300,1000)
-    elif F=='FLUX_1000_300000':
-        flux3FGL=cat.calc_int_flux(1000,300000)
-    
-
     if not cfg.quiet:
-        print("Plotting object average flux {}: {:.2e} ph cm-2 s-1".format(F,flux3FGL))
+        print("Plotting object average flux {}: {:.2e} ph cm-2 s-1".format(F,flux_3FGL))
 
-    plt.plot([tmin,tmax], [flux3FGL,flux3FGL],'b-')
+    plt.plot([tmin,tmax], [flux_3FGL,flux_3FGL],'b-')
 
 
 
@@ -295,9 +299,11 @@ if cfg.load_mjds:
     mjds_start,mjds_end=np.loadtxt(cfg.load_mjds,unpack=True)
     mjd_mid=(mjds_start+mjds_end)/2
 
+    ylims=plt.gca().get_ylim()
     for start,end in zip(mjds_start, mjds_end):
-        plt.plot([start, end],[ymjd, ymjd],'r-')
-        plt.plot(mjd_mid,np.ones(len(mjd_mid))*ymjd,'r.')
+#        plt.plot([start, end],[ymjd, ymjd],'r-')
+#        plt.plot(mjd_mid,np.ones(len(mjd_mid))*ymjd,'r.')
+        plt.fill_between([start, end], ylims, facecolor='red', alpha=0.5,edgecolor='red')
 
 
 if cfg.Swift:
@@ -311,7 +317,7 @@ if cfg.Swift:
         if not cfg.quiet: print("Could not download Swift lightcurve for", object)            
     else:  # "-S given w file so use
         if not cfg.quiet: print("Loading Swift data from",swift_file)
-        swift_data=np.loadtxt(swift_file, skiprows=23)
+        swift_data=np.loadtxt(swift_file, skiprows=23, ndmin=2)  # ndmin needed for when only 1 row
         swift_mjd=swift_data[:,0]
         swift_dmjd=swift_data[:,1]
         swift_rate=swift_data[:,2]
@@ -321,26 +327,68 @@ if cfg.Swift:
         ax2.set_ylabel('Swift XRT cts/s.', color='g')
         ax2.tick_params('y', colors='g')
         if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]: # i.e. if Swift has more recent data than LAT
-            tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.05+tmin
+            tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.02+tmin
+
 
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 
 
+# for naming of plots....
+if cfg.days==0:
+    dur="_all"
+else:
+    dur="_last{:d}days".format(cfg.days)
 
-
-if not cfg.no_png:
-    pngfile=object+"_"+timescale+"_"+F+".png"
+if cfg.png:
+    pngfile=object+"_"+timescale+"_"+F+dur+".png"
     if not cfg.quiet: print("Saving",pngfile)
     plt.savefig(pngfile)
 
 
+if cfg.pdf:
+    pdffile=object+"_"+timescale+"_"+F+dur+".pdf"
+    if not cfg.quiet: print("Saving",pdffile)
+    plt.savefig(pdffile)
+
+
 if cfg.plot_window:
-    print("Please manualy close figure window for program to continue!")
+    print("Please manually close figure window for program to continue!")
     plt.show()
 
 
 if cfg.remove_FITS:
     if not cfg.quiet: print("Removing",FITS)
     os.remove(FITS)
+
+
+
+#if cfg.stdout:
+#    if not cfg.quiet:
+#        print("Printing data to stdout:")
+#        print("{:8s}  {:4s}  {:8s}  {:8s}".format("MJD_mid", "dMJD", "Flux", "Flux_err"))
+#    for j in i[0]: # where returns a tuple of arrays so the first element is the array!
+#        print("{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}".format(t[j], dx[j], f[j], fe[j]))
+
+
+if cfg.stdout:
+    if not cfg.quiet:
+        print("Printing data to stdout:")
+        print("{:8s}  {:4s}  {:8s}  {:8s}  {:4s}  {:4s}".format("MJD_mid", "dMJD", "Flux", "Flux_err", "Frac3FGL", "FracCrabGt200GeV"))
+    divisor = 7 if cfg.weekly else 1
+    index_from_end=cfg.days//divisor
+    index_max=len(t)
+    for i in range(index_max-index_from_end, index_max):
+        if ulf[i]:
+            ferr=0.0
+            flux_ratio_3FGL=0.0
+            flux_gt_200GeV=0.0
+            flux_frac_crab_gt_200GeV = 0.0
+        else:
+            ferr=fe[i]
+            flux_ratio_3FGL=f[i]/flux_3FGL
+            flux_gt_200GeV=f[i]/flux_3FGL * flux_3FGL_gt_200GeV
+            flux_frac_crab_gt_200GeV = flux_gt_200GeV/flux_crab_gt_200GeV
+
+        print("{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}    {:4.2f}    {:4.2f}".format(t[i], dx[i], f[i], ferr, flux_ratio_3FGL, flux_frac_crab_gt_200GeV))
 
