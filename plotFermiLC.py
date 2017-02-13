@@ -11,7 +11,7 @@ from astropy.io import fits
 import numpy as np
 
 
-import map_names
+import map_name
 
 import sys
 #if len(sys.argv) = 2:
@@ -113,7 +113,7 @@ Crab_fluxes={'FLUX_1000_300000':1.8e-7, 'FLUX_300_1000':5.74e-7, 'FLUX_100_30000
 # remove spaces in object names to match LAT LC filenames.
 #object=cfg.name.replace(" ","")
 
-object=map_names.map_name_to_LATLC(cfg.name)
+object=map_name.map_name(cfg.name,"LAT_LC")
 
 if cfg.weekly: 
     FITS=object+'_604800.lc'
@@ -261,7 +261,7 @@ if cfg.Crab_flux:
 if cfg.Average:
     import Cat3FGL
     cat=Cat3FGL.Cat3FGL()
-    cat.select_object(map_names.map_name_to_LATASSOC1(cfg.name))
+    cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
 
     if F=='FLUX_100_300000':
         flux3FGL=cat.calc_int_flux(100,300000)

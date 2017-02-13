@@ -18,7 +18,7 @@ import numpy as np
 
 import os
 import sys
-import map_names
+import map_name
 
 
 class Cat3FGL:
@@ -81,7 +81,7 @@ class Cat3FGL:
         """
 
         if field=="ASSOC1":
-            name=map_names.map_name_to_LATASSOC1(name)
+            name=map_name.map_name(name,"LAT_ASSOC1")
             names=self.tbdata['ASSOC1']
         elif field=="Source_Name":
             names=self.tbdata['Source_Name']

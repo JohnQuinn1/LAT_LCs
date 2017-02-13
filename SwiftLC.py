@@ -2,7 +2,7 @@ import os
 import sys
 import wget
 
-import map_names
+import map_name
 
 class SwiftLC:
     """
@@ -36,7 +36,7 @@ class SwiftLC:
         else:
             bar_style=None
 
-        swift_name=map_names.map_name_to_SwiftLC(name)
+        swift_name=map_name.map_name(name,"Swift_LC")
 
         filename='lightcurve.txt'
         if os.path.isfile(filename):
@@ -59,7 +59,7 @@ class SwiftLC:
                 print("Some error occurred...")
             raise
 
-        new_filename="Swift_"+map_names.map_name_to_LATLC(name)+".txt"
+        new_filename="Swift_"+map_name.map_name(name,"LAT_LC")+".txt"
 
         if not self.quiet: 
             print()
