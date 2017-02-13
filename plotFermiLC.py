@@ -78,10 +78,15 @@ parser.add_argument('-l','--load_mjds',
                     default="", 
                     help="load 2-column ascii file of MJDs for plotting.")
 
+#parser.add_argument('-S','--Swift', 
+#                    type=str, 
+#                    default="", 
+#                    help="load Swift data in lightcurve.txt ('overall') format for plotting")
+
 parser.add_argument('-S','--Swift', 
-                    type=str, 
+                    action='store_true', 
                     default="", 
-                    help="load Swift data in lightcurve.txt ('overall') format for plotting")
+                    help="download Swift data in lightcurve.txt ('overall') format, rename and plot")
 
 parser.add_argument('-n','--name',
                     type=str,
@@ -260,7 +265,7 @@ if cfg.Crab_flux:
 
 if cfg.Average:
     import Cat3FGL
-    cat=Cat3FGL.Cat3FGL()
+    cat=Cat3FGL.Cat3FGL(quiet=cfg.quiet)
     cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
 
     if F=='FLUX_100_300000':
@@ -290,19 +295,25 @@ if cfg.load_mjds:
         plt.plot(mjd_mid,np.ones(len(mjd_mid))*ymjd,'r.')
 
 
-if cfg.Swift:    
-    if not cfg.quiet: print("Loading Swift data from",cfg.Swift)
-    swift_data=np.loadtxt(cfg.Swift, skiprows=23)
-    swift_mjd=swift_data[:,0]
-    swift_dmjd=swift_data[:,1]
-    swift_rate=swift_data[:,2]
-    swift_raterr=swift_data[:,3]
-    ax2=plt.gca().twinx()
-    ax2.errorbar(swift_mjd, swift_rate, xerr=swift_dmjd, yerr=swift_raterr,fmt='go')
-    ax2.set_ylabel('Swift XRT cts/s.', color='g')
-    ax2.tick_params('y', colors='g')
-    if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]:
-        tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.05+tmin
+if cfg.Swift:
+    import SwiftLC
+    SLC=SwiftLC.SwiftLC(quiet=cfg.quiet)
+    res=SLC.download(object)
+    if res is None:
+        if not cfg.quiet: print("Could not download Swift lightcurve for", object)
+    else:
+        if not cfg.quiet: print("Loading Swift data from",res)
+        swift_data=np.loadtxt(res, skiprows=23)
+        swift_mjd=swift_data[:,0]
+        swift_dmjd=swift_data[:,1]
+        swift_rate=swift_data[:,2]
+        swift_raterr=swift_data[:,3]
+        ax2=plt.gca().twinx()
+        ax2.errorbar(swift_mjd, swift_rate, xerr=swift_dmjd, yerr=swift_raterr,fmt='go')
+        ax2.set_ylabel('Swift XRT cts/s.', color='g')
+        ax2.tick_params('y', colors='g')
+        if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]: # i.e. if Swift has more recent data than LAT
+            tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.05+tmin
 
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
