@@ -83,17 +83,6 @@ def make_html_string(data, get_cts=True):
     str="""
     <!DOCTYPE html>
     <html>
-    <h1 align="center"> Swift LAT-monitored sources</h1>
-    <p align="center"> Original site: <a href="{0}">{0}</a></p>
-    <p align="center"> Time of last update of this page: UT {1:%Y-%m-%d %H:%M} </p>
-    """.format(URL,datetime.utcnow())
-
-    if(cfg.limit):
-        str+="""    <p align="center"> Limited to objects with updates in last {} days </p>""".format(cfg.limit)
-        
-
-
-    str+="""
     <head>
         <style>
         table, th, td {
@@ -109,6 +98,17 @@ def make_html_string(data, get_cts=True):
     </style>
     </head>
     """
+
+    str+="""
+    <h1 align="center"> Swift LAT-monitored sources</h1>
+    <body>
+    <p align="center"> Original site: <a href="{0}">{0}</a></p>
+    <p align="center"> Time of last update of this page: UT {1:%Y-%m-%d %H:%M} </p>
+    """.format(URL,datetime.utcnow())
+
+    if(cfg.limit):
+        str+="""   <p align="center"> Limited to objects with updates in last {} days </p>""".format(cfg.limit)
+        
 
 
     str+="""

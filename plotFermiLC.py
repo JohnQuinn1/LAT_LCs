@@ -56,7 +56,8 @@ parser.add_argument('-c','--column_info',
 
 parser.add_argument('-s','--stdout', 
                     action='store_true', 
-                    help='print data to std out')
+                    help='print lightcurve data to std out')
+
 
 parser.add_argument('-p','--plot_window', 
                     action='store_true', 
@@ -102,6 +103,10 @@ parser.add_argument('-n','--name',
                     type=str,
                     required=True,
                     help='name of object to be downloaded')
+
+parser.add_argument('-F','--file',
+                    action='store_true',
+                    help='save lightcurve data to text file - name same as image but .txt')
 
 
 parser.add_argument('-q', '--quiet', 
@@ -341,16 +346,14 @@ else:
     dur="_last{:d}days".format(cfg.days)
 
 if cfg.png:
-    pngfile=object+"_"+timescale+"_"+F+dur+".png"
-    if not cfg.quiet: print("Saving",pngfile)
-    plt.savefig(pngfile)
-
+    png_file=object+"_"+timescale+"_"+F+dur+".png"
+    if not cfg.quiet: print("Saving",png_file)
+    plt.savefig(png_file)
 
 if cfg.pdf:
-    pdffile=object+"_"+timescale+"_"+F+dur+".pdf"
-    if not cfg.quiet: print("Saving",pdffile)
-    plt.savefig(pdffile)
-
+    pdf_file=object+"_"+timescale+"_"+F+dur+".pdf"
+    if not cfg.quiet: print("Saving",pdf_file)
+    plt.savefig(pdf_file)
 
 if cfg.plot_window:
     print("Please manually close figure window for program to continue!")
@@ -371,13 +374,16 @@ if cfg.remove_FITS:
 #        print("{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}".format(t[j], dx[j], f[j], fe[j]))
 
 
-if cfg.stdout:
-    if not cfg.quiet:
-        print("Printing data to stdout:")
-        print("{:8s}  {:4s}  {:8s}  {:8s}  {:4s}  {:4s}".format("MJD_mid", "dMJD", "Flux", "Flux_err", "Frac3FGL", "FracCrabGt200GeV"))
+##################################################################################
+#
+# save data to stdout or file.
+
+if cfg.stdout or cfg.file:
+    outstr=""
     divisor = 7 if cfg.weekly else 1
     index_from_end=cfg.days//divisor
     index_max=len(t)
+
     for i in range(index_max-index_from_end, index_max):
         if ulf[i]:
             ferr=0.0
@@ -390,5 +396,17 @@ if cfg.stdout:
             flux_gt_200GeV=f[i]/flux_3FGL * flux_3FGL_gt_200GeV
             flux_frac_crab_gt_200GeV = flux_gt_200GeV/flux_crab_gt_200GeV
 
-        print("{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}    {:4.2f}    {:4.2f}".format(t[i], dx[i], f[i], ferr, flux_ratio_3FGL, flux_frac_crab_gt_200GeV))
+        outstr+="{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}    {:4.2f}    {:4.2f}\n".format(t[i], dx[i], f[i], ferr, flux_ratio_3FGL, flux_frac_crab_gt_200GeV)
 
+
+if cfg.stdout:
+    if not cfg.quiet:
+        print("{:8s}  {:4s}  {:8s}  {:8s}  {:4s}  {:4s}".format("MJD_mid", "dMJD", "Flux", "Flux_err", "Frac3FGL", "FracCrabGt200GeV"))
+    print(outstr)
+
+if cfg.file:
+    filename=object+"_"+timescale+"_"+F+dur+".txt"
+    with open(filename,"w") as f:
+        f.write(outstr)
+
+##################################################################################
