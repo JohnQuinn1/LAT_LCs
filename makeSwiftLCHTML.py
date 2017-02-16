@@ -51,7 +51,7 @@ cfg = parser.parse_args()
 ############################################################################################
 
 
-def process_cells(cells):
+def process_cells(cells,data):
     if len(cells)>5:
         name=cells[1].getText().strip()
         if name=="Target":
@@ -158,11 +158,11 @@ data=[]
 
 for row in table[2].findAll("tr"):
     cells=row.findAll("td")
-    process_cells(cells)
+    process_cells(cells,data)
 
 for row in table[3].findAll("tr"):
     cells=row.findAll("td")
-    process_cells(cells)
+    process_cells(cells,data)
 
 
 data_sorted=sorted(data, key=lambda d: d[1], reverse=True) 

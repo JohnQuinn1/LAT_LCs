@@ -4,12 +4,6 @@ import os
 import sys
 import subprocess
 import numpy as np
-from datetime import datetime
-import ephem
-from collections import OrderedDict
-import numpy
-import json
-import Cat3FGL
 
 # Steps:
 #
@@ -36,18 +30,27 @@ import Cat3FGL
 
 ###########################################################################
 
+from datetime import datetime
+import ephem
+
+#    <head>
+#    <style>"""
+#    p {{
+#      margin-left:50px;
+#    }}
+#    </style>
+#    <head>
 
 
-def make_LAT_flux_table(f):
+def make_flux_table(f):
     data=np.loadtxt(f)
     last=data[-5:,:]
 
-#         <table style="width:50%">    
     str=""
 
     str+="""
          <center>
-         <table>    
+         <table style="width:50%">    
          <caption> Recent LAT flux values ... </caption>
          <tr>                                                                                                                                
             <th align="left"> MJD </th> 
@@ -82,10 +85,8 @@ def make_LAT_flux_table(f):
 
 
 
-def make_individual_HTML(object_dict):
-    """Write web page for individual object passed a dictionary of object properties"""
-
-    object=object_dict
+def make_individual_HTML(name, object, files):
+    """Write web page for individual object"""
 
     str="""                                                                     
     <!DOCTYPE html>        
@@ -101,142 +102,53 @@ def make_individual_HTML(object_dict):
         th, td {{                                                                                                                        
             padding: 5px;                                                                                                               
             text-align: left;                                                                                                           
-        }}
-
-        div {{
-              width:100%;
-              height:30px;
-        }}
+        }}                                                                                                                               
     </style>                                                                                                                            
     </head>      
                                
     <h1 align="center"> {0} </h1>                        
     <body>
-    """.format(object['name'])                 
+    """.format(name)                 
 
-
-
-    str+="""
-    <p align="center"> LAT Lightcurve site: <a href="{0}">{0}</a></p>                 
-    <p align="center"> Swift site: <a href="{1}">{1}</a></p>                 
-    <p align="center"> Time of last update of this page: UT {2:%Y-%m-%d %H:%M} </p>     
-    """.format(object['LAT_URL'],object['Swift_URL'],datetime.utcnow())
-
-
-
-
-    #############################################################
-    str+="""
-         <div></div>
-         <center>
-         <table style="width:50%">    
-         <caption> Object Properties </caption>
-
-         <tr>                                                                                                                                
-            <th align="left"> Property </th> 
-            <th align="left"> Value </th>  
-         </tr>"""
 
     RA=ephem.hours(float(object['RA'])*ephem.pi/180.0)
     Dec=ephem.degrees(float(object['Dec'])*ephem.pi/180.0)
 
     str+="""
-         <tr>
-             <td> R.A. </td>
-             <td> {} </td>
-         </tr>
-         <tr>
-             <td> Dec. </td>
-             <td> {} </td>
-         </tr>
-         <tr>
-             <td> z </td>
-             <td> {} </td>
-         </tr>
-         <tr>
-             <td> 3FGL SpectrumType </td>
-             <td> {} </td>
-         </tr>
-         <tr>
-             <td> 3FGL PL Index </td>
-             <td> {} </td>
-         </tr>
-         <tr>
-             <td> 3FGL Flux_100_300000 </td>
-             <td> {:.2e} </td>
-         </tr>
-         <tr>
-             <td> 3FGL Flux_1000_300000 </td>
-             <td> {:.2e} </td>
-         </tr>
-         <tr>
-             <td> 3FGL Extrap. Crab >200 GeV </td>
-             <td> {:.2f} </td>
-         </tr>
-         """.format(RA, 
-                    Dec, 
-                    object['z'],
-                    object['3FGL_spec_type'],
-                    object['3FGL_PL_index'],
-                    object['3FGL_flux_100'],
-                    object['3FGL_flux_1000'],
-                    object['3FGL_frac_gt200GeV'])
+    <p align="center"> RA:   {} deg. = {} </p>
+    <p align="center"> Dec.: {} deg. = {} </p>
+    <p align="center"> z={} </p>
+    """.format(object['RA'], RA, object['Dec'],Dec, object['z'])
 
     str+="""
-         </table>
-         </center>
-         <div></div>
-         """
-
-    
-
-
+    <p align="center"> Original site: <a href="{0}">{0}</a></p>                 
+    <p align="center"> Time of last update of this page: UT {1:%Y-%m-%d %H:%M} </p>    
+    """.format(object['URL'],datetime.utcnow())
 
 
     
-    #############################################################
-    ### 100 MeV to 300 GeV 
-    ### Daily:
-    str+="<hr>"
+   #### 100 MeV to 300 GeV:
+    str+="<hr/>"
     str+="<center> <h3> LAT light curves: 100 MeV to 300 GeV </h3></center>"
-    
-    str+="""<center><img src="{0}"> </center>""".format(object['filename_100_daily']+'.png')
-    str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_100_daily']+'.txt')
-    str+="""<div></div>"""
+    for f in files:
+        if "100_300000" in f:
+            str+="""
+                 <center><img src="{0}"> </center>
+                 """.format(f)
 
-    ### Weekly:
-    
-    str+="""<center><img src="{0}"> </center>""".format(object['filename_100_weekly']+'.png')
-    str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_100_weekly']+'.txt')
-    str+="""<div></div>"""
-    #############################################################
+            str+=make_flux_table(f.replace(".png",".txt")) 
 
+    str+="<hr/>"
+    str+="<center> <h3> LAT light curves: 1 GeV to 300 GeV </h3></center>"
 
-    #############################################################
-    ### 1000 MeV to 300 GeV 
-    ### Daily:
-    str+="<hr>"
-    str+="<center> <h3> LAT light curves: 1000 MeV to 300 GeV </h3></center>"
-    
-    str+="""<center><img src="{0}"> </center>""".format(object['filename_1000_daily']+'.png')
-    str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_1000_daily']+'.txt')
-    str+="""<div></div>"""
+    for f in files:
+        if "1000_300000" in f:
+            str+="""
+                 <center><img src="{0}"> </center>
+                 """.format(f)
+            str+=make_flux_table(f.replace(".png",".txt")) 
 
-
-    ### Weekly:
-    
-    str+="""<center><img src="{0}"> </center>""".format(object['filename_1000_weekly']+'.png')
-    str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_1000_weekly']+'.txt')
-    str+="""<div></div>"""
-
-    #############################################################
-
-    str+="""<hr>"""
-
+    str+="<hr/>"
 
     str+="""                                                                                      
     </body>                                                                                       
@@ -245,10 +157,8 @@ def make_individual_HTML(object_dict):
 
     return str
 
-##################################################################
 
-
-###### Main Script
+###########################################################################
 
 # Change to root folder
 
@@ -310,14 +220,13 @@ command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File,
 
 LC_File="test.txt"
 
-objects=OrderedDict()
+objects={}
 
 with open(LC_File,"r") as f:
     for line in f:
         fields=line.split(",")
         object=fields[0].replace(" ","")
-        objects[object]={'name':object,
-                         'LAT_URL':fields[1],
+        objects[object]={'URL':fields[1],
                          'RA':fields[2], 
                          'Dec':fields[3], 
                          'z':fields[4]} 
@@ -336,17 +245,18 @@ import glob
 import SwiftLC
 SLC=SwiftLC.SwiftLC(quiet=True)
 
+for name in objects:
+    print()
+    print(name)
+    print()
 
-for object in objects:
-    print(object)
+    # if directpry does not exist make it
+    if not os.path.isdir(name):
+        if os.path.isfile(name):
+            os.remove(name)
+        os.mkdir(name)
 
-    # if directory does not exist make it
-    if not os.path.isdir(object):
-        if os.path.isfile(object):
-            os.remove(object)
-        os.mkdir(object)
-
-    os.chdir(object)
+    os.chdir(name)
 
     for lc_file in glob.glob("*.lc"):
         os.remove(lc_file)
@@ -355,79 +265,38 @@ for object in objects:
         os.remove(png_file)
 
 
-    #### 3FGL:
-
-    LAT3FGL=Cat3FGL.Cat3FGL()
-    LAT3FGL.select_object(object)
-    objects[object]['3FGL_spec_type']=LAT3FGL.get_SpectrumType()
-    if objects[object]['3FGL_spec_type']=="PowerLaw":
-        objects[object]['3FGL_PL_index']="{:.2f}".format(LAT3FGL.get_field('Spectral_Index'))
-        objects[object]['3FGL_flux_100']=LAT3FGL.calc_PL_int_flux(100,300000)
-        objects[object]['3FGL_flux_1000']=LAT3FGL.calc_PL_int_flux(1000,300000)
-        objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)
-        objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)/2.36e-10
-    else:
-        objects[object]['3FGL_PL_index']=""
-        objects[object]['3FGL_flux_100']=LAT3FGL.calc_int_flux(100,300000)
-        objects[object]['3FGL_flux_1000']=LAT3FGL.calc_int_flux(1000,300000)
-        objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)
-        objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10
-    
-
-    ##### Swift:
-
-    Swift_LC_file=SLC.download(object)
-    if Swift_LC_file is not None:
-        swift_name=map_name.map_name(object,"Swift_LC")
-        objects[object]['Swift_URL']='http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name)
-        print('http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name))
-
+    Swift_LC_file=SLC.download(name)
 
     # Daily 100 MeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_100_300000")
+    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -a".format(name, "FLUX_100_300000")
     if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_100_daily']=root_filename
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_100_daily']=data.tolist()
-
+    res=subprocess.check_output(command, shell=True).decode('utf-8').strip()
 
     # Daily 1 GeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_1000_300000")   
+    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -a".format(name, "FLUX_1000_300000")   
     if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_1000_daily']=root_filename
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_1000_daily']=data.tolist()
+    res=subprocess.check_output(command, shell=True).decode('utf-8').strip()
 
 
     # Weekly 100 MeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_100_300000")
+    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -a".format(name, "FLUX_100_300000")
     if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_100_weekly']=root_filename
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_100_weekly']=data.tolist()
-
+    res=subprocess.check_output(command, shell=True).decode('utf-8')
 
     # Weekly 1 GeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_1000_300000")   
+    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -a".format(name, "FLUX_1000_300000")   
     if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_1000_weekly']=root_filename    
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_1000_weekly']=data.tolist()
+    res=subprocess.check_output(command, shell=True).decode('utf-8')
+    
+    files=glob.glob("*.png")
+    
+    s=make_individual_HTML(object,objects[object],files)
 
-
-    str=make_individual_HTML(objects[object])
-
-    with open ("index.html","w") as f:
-        f.write(str)
-
+    with open("index.html","w") as f:
+        f.write(s)
 
     os.chdir("..")
 
-print(json.dumps(objects, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
 

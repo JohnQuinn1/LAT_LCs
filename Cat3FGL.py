@@ -42,6 +42,11 @@ class Cat3FGL:
         self.index=None
         self.quiet=quiet
 
+        # suppress warnings from scipy numerical integration 
+        if quiet:
+            import warnings
+            warnings.filterwarnings("ignore")            
+
         if os.path.isfile(Cat3FGL.catalogue_default):
             self.catalogue=Cat3FGL.catalogue_default
         else:

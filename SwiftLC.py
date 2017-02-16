@@ -6,7 +6,8 @@ import map_name
 
 class SwiftLC:
     """
-    Class for dowloading Swift lightcurves ('Overall Light Curve')
+    Class for downloading Swift lightcurves ('Overall Light Curve')
+    Existing file will be overwritten.
 
     Example usage:
 
@@ -31,10 +32,10 @@ class SwiftLC:
         Unknown what happens if error, for example, connecting to server.
         """
         
-        if not self.quiet:
-            bar_style=wget.bar_adaptive
-        else:
+        if self.quiet:
             bar_style=None
+        else:
+            bar_style=wget.bar_adaptive
 
         swift_name=map_name.map_name(name,"Swift_LC")
 
@@ -43,13 +44,13 @@ class SwiftLC:
             if not self.quiet: print("Removing local file:",filename)
             os.remove(filename)
 
-        remote_filename="http://www.swift.psu.edu/monitoring/data/"+swift_name+"/lightcurve.txt"
-        if not self.quiet: print("Downloading latest file:",remote_filename)
+        self.remote_filename="http://www.swift.psu.edu/monitoring/data/"+swift_name+"/lightcurve.txt"
+        if not self.quiet: print("Downloading latest file:",self.remote_filename)
 
 
         try:
             from urllib.error import HTTPError # just so I can catch and handle this exception
-            x=wget.download(remote_filename, bar=bar_style)
+            x=wget.download(self.remote_filename, bar=bar_style)
         except HTTPError as e:
             if not self.quiet:
                 print(e)

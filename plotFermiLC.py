@@ -10,13 +10,11 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import numpy as np
 
+import LATLC
 
 import map_name
 
 import sys
-#if len(sys.argv) = 2:
-#    print("Usage: {} 'object name'".format(sys.argv[0]))
-#    sys.exit(0)
           
 
 import argparse
@@ -61,7 +59,7 @@ parser.add_argument('-s','--stdout',
 
 parser.add_argument('-p','--plot_window', 
                     action='store_true', 
-                    help='open plot window (otherwise plot produced just on disk')
+                    help='open plot window')
 
 
 parser.add_argument('-N','--png', 
@@ -97,7 +95,7 @@ parser.add_argument('-S','--Swift',
                     default="", 
                     help=("give filename for  Swift data in lightcurve.txt ('overall') format "
                           "to be plotted. If no filename is given the lightcurve txt file will "
-                          "be downloaded and renamed from the Switf site"))
+                          "be downloaded and renamed from the Swift site"))
 
 parser.add_argument('-n','--name',
                     type=str,
@@ -118,6 +116,10 @@ parser.add_argument('-C', '--Crab_flux',
                     action='store_true',
                     help='plot a horizontal line indicating the mean Crab Nebula flux')
 
+parser.add_argument('-R', '--Root_filename',
+                    action='store_true',
+                    help='Print the root filename (i.e. w/o extension) for plots and text out/')
+
 
 parser.add_argument('-A', '--Average',
                     action='store_true',
@@ -127,62 +129,21 @@ parser.add_argument('-A', '--Average',
 
 cfg = parser.parse_args()
 
+################################################################
+
+
 Crab_fluxes={'FLUX_1000_300000':1.8e-7, 'FLUX_300_1000':5.74e-7, 'FLUX_100_300000':2.75e-6}
 
 
-# remove spaces in object names to match LAT LC filenames.
-#object=cfg.name.replace(" ","")
-
 object=map_name.map_name(cfg.name,"LAT_LC")
 
-if cfg.weekly: 
-    FITS=object+'_604800.lc'
-else:
-    FITS=object+'_86400.lc'
 
+LC=LATLC.LATLC(quiet=cfg.quiet)
 
-##############################################################
-# download or use already-existing file...
+FITS=LC.download(object,cfg.weekly)
 
-import os
-
-if cfg.already_downloaded and os.path.exists(FITS):
-    if not cfg.quiet: print("Using downloaded",FITS)
-    
-else:
-    import wget
-
-    if not cfg.quiet:
-        bar_style=wget.bar_adaptive
-    else:
-        bar_style=None
-
-
-    # Daily
-    if os.path.isfile(FITS):
-        if not cfg.quiet: print("Removing old file:",FITS)
-        os.remove(FITS)
-
-    if not cfg.quiet: print("Downloading latest daily file:",FITS)
-
-    remote_file='http://fermi.gsfc.nasa.gov/FTP/glast/data/lat/catalogs/asp/current/lightcurves/'+FITS
-
-    if not cfg.quiet: print("wget:",remote_file)
-
-    try:
-        from urllib.error import HTTPError # just so I can catch and handle this exception
-        x=wget.download(remote_file, bar=bar_style)
-    except HTTPError as e:
-        print(e)
-        print("Exiting...")
-        sys.exit(1)
-    except:
-        print("Some error occurred...")
-        raise
-        
-
-    if not cfg.quiet: print()
-
+if FITS is None:
+    sys.exit(1)
 
 ##############################################################
 
@@ -297,7 +258,6 @@ if cfg.Average:
 
 
 
-
 if cfg.load_mjds:    
     ymjd=np.mean(plt.gca().get_ylim())  # get axes y limits and mid point
     if not cfg.quiet: print("Loading MJDs from",cfg.load_mjds)
@@ -339,39 +299,35 @@ plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 
 
+
 # for naming of plots....
 if cfg.days==0:
     dur="_all"
 else:
     dur="_last{:d}days".format(cfg.days)
 
+
+root_filename=object+"_"+timescale+"_"+F+dur
+
+##################################################################################
+
 if cfg.png:
-    png_file=object+"_"+timescale+"_"+F+dur+".png"
+    png_file=root_filename+".png"
     if not cfg.quiet: print("Saving",png_file)
     plt.savefig(png_file)
 
+
 if cfg.pdf:
-    pdf_file=object+"_"+timescale+"_"+F+dur+".pdf"
+    pdf_file=root_filename+".pdf"
     if not cfg.quiet: print("Saving",pdf_file)
     plt.savefig(pdf_file)
 
-if cfg.plot_window:
-    print("Please manually close figure window for program to continue!")
-    plt.show()
 
+##################################################################################
 
 if cfg.remove_FITS:
     if not cfg.quiet: print("Removing",FITS)
     os.remove(FITS)
-
-
-
-#if cfg.stdout:
-#    if not cfg.quiet:
-#        print("Printing data to stdout:")
-#        print("{:8s}  {:4s}  {:8s}  {:8s}".format("MJD_mid", "dMJD", "Flux", "Flux_err"))
-#    for j in i[0]: # where returns a tuple of arrays so the first element is the array!
-#        print("{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}".format(t[j], dx[j], f[j], fe[j]))
 
 
 ##################################################################################
@@ -404,9 +360,19 @@ if cfg.stdout:
         print("{:8s}  {:4s}  {:8s}  {:8s}  {:4s}  {:4s}".format("MJD_mid", "dMJD", "Flux", "Flux_err", "Frac3FGL", "FracCrabGt200GeV"))
     print(outstr)
 
+
 if cfg.file:
-    filename=object+"_"+timescale+"_"+F+dur+".txt"
+    filename=root_filename+".txt"
     with open(filename,"w") as f:
         f.write(outstr)
 
 ##################################################################################
+
+if cfg.Root_filename:
+    print(root_filename)
+
+##################################################################################
+
+if cfg.plot_window:
+    print("Please manually close figure window for program to continue!")
+    plt.show()
