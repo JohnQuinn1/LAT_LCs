@@ -37,6 +37,44 @@ import Cat3FGL
 ###########################################################################
 
 
+def write_main_html(objects):
+    
+    str="""
+    <!DOCTYPE html>        
+    <html>   
+    <head> 
+    <style>
+    table, th, td {{
+       border: 1px solid black;
+       border-collapse: collapse;
+       margin-left: auto;
+       margin-right: auto;                                                                                                  }}                                                                                                                               
+    th, td {{                                                                                                                        
+        padding: 5px;                                                                                                               
+        text-align: left;                                                                                                           
+    }}
+
+    div {{
+        width:100%;
+        height:30px;
+    }}
+    </style>                                                                                                                            
+    </head>      
+                               
+    <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1>                        
+    <body>
+    """
+
+    
+
+
+
+
+
+
+###########################################################################
+
+
 
 def make_LAT_flux_table(f):
     data=np.loadtxt(f)
@@ -47,9 +85,9 @@ def make_LAT_flux_table(f):
 
     str+="""
          <center>
-         <table>    
+         <table  style="width:50%">    
          <caption> Recent LAT flux values ... </caption>
-         <tr>                                                                                                                                
+         <tr>                                 
             <th align="left"> MJD </th> 
             <th align="left"> dMJD </th>  
             <th align="left"> Flux </th>
@@ -76,7 +114,7 @@ def make_LAT_flux_table(f):
                   <td> {} </td>
              </tr>""".format(mjd_s,dmjd_s,flux_s,dflux_s,f3FGL_s,fCr200_s)
                 
-    str+="""</table> <center>"""     
+    str+="""</table> </center>"""     
         
     return str
 
@@ -89,24 +127,23 @@ def make_individual_HTML(object_dict):
 
     str="""                                                                     
     <!DOCTYPE html>        
-    <html>                      
-    <head>                                                                                                                              
-        <style>                                                                                                                         
-        table, th, td {{                                                                                                                 
-            border: 1px solid black;                                                                                                    
-            border-collapse: collapse;                                                                                                  
-            margin-left: auto;                                                                                                          
-            margin-right: auto;                                                                                                         
-        }}                                                                                                                               
-        th, td {{                                                                                                                        
-            padding: 5px;                                                                                                               
-            text-align: left;                                                                                                           
-        }}
+    <html>   
+    <head> 
+    <style>
+    table, th, td {{
+       border: 1px solid black;
+       border-collapse: collapse;
+       margin-left: auto;
+       margin-right: auto;                                                                                                  }}                                                                                                                               
+    th, td {{                                                                                                                        
+        padding: 5px;                                                                                                               
+        text-align: left;                                                                                                           
+    }}
 
-        div {{
-              width:100%;
-              height:30px;
-        }}
+    div {{
+        width:100%;
+        height:30px;
+    }}
     </style>                                                                                                                            
     </head>      
                                
@@ -119,8 +156,9 @@ def make_individual_HTML(object_dict):
     str+="""
     <p align="center"> LAT Lightcurve site: <a href="{0}">{0}</a></p>                 
     <p align="center"> Swift site: <a href="{1}">{1}</a></p>                 
-    <p align="center"> Time of last update of this page: UT {2:%Y-%m-%d %H:%M} </p>     
-    """.format(object['LAT_URL'],object['Swift_URL'],datetime.utcnow())
+    <p align="center"> NED: <a href="http://nedwww.ipac.caltech.edu/cgi-bin/nph-objsearch?extend=no&of=html&objname={2:}">Query</a></p>
+    <p align="center"> Time of last update of this page:  UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
+    """.format(object['LAT_URL'],object['Swift_URL'],object['name'],datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5 )
 
 
 
@@ -237,6 +275,17 @@ def make_individual_HTML(object_dict):
 
     str+="""<hr>"""
 
+    str+="""<div></div>"""
+
+    str+="""<center><h3> VERITAS {} visibility tonight </h3></center>""".format(object['name'])
+    
+    command="obs_tool.py -c {} {} 2000".format(object['RA'],object['Dec'])
+    res=subprocess.check_output(command, shell=True).decode('utf-8').strip()                        
+    str+="""
+         <div style="margin:auto; height:auto; width:50%;">
+         <pre style="text-align: left;">{}</pre>
+         </div>
+         """.format(res)
 
     str+="""                                                                                      
     </body>                                                                                       
@@ -427,16 +476,9 @@ for object in objects:
 
     os.chdir("..")
 
+
+    write_main_html(objects)
+
+
+
 print(json.dumps(objects, sort_keys=True, indent=4, separators=(',', ': ')))
-
-
-
-
-     
-
-
-            
-
-
-
-  
