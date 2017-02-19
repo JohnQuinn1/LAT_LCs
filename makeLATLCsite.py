@@ -44,29 +44,84 @@ def write_main_html(objects):
     <html>   
     <head> 
     <style>
-    table, th, td {{
+
+    table, th, td {
        border: 1px solid black;
        border-collapse: collapse;
        margin-left: auto;
-       margin-right: auto;                                                                                                  }}                                                                                                                               
-    th, td {{                                                                                                                        
-        padding: 5px;                                                                                                               
-        text-align: left;                                                                                                           
-    }}
+       margin-right: auto;
+    }
 
-    div {{
+    th, td {
+       padding: 5px;
+       text-align: left;
+    }
+
+    div {
         width:100%;
         height:30px;
-    }}
-    </style>                                                                                                                            
+    }
+    </style>
     </head>      
                                
-    <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1>                        
+    <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
     <body>
     """
 
-    
+    # Make table
 
+    str+="""
+         <center>
+         <table  style="width:90%">    
+         """
+
+    for object in objects:
+        objdict=objects[object]
+        name=objdict['name']
+
+        d100png=name+"/"+objdict['filename_100_daily']+'.png'
+        w100png=name+"/"+objdict['filename_100_weekly']+'.png'
+        d1000png=name+"/"+objdict['filename_1000_daily']+'.png'
+        w1000png=name+"/"+objdict['filename_1000_weekly']+'.png'
+
+        d100png=name+"/"+objdict['filename_100_daily']+'.png'
+        w100png=name+"/"+objdict['filename_100_weekly']+'.png'
+
+        d100="""<img src="{}" alt="Daily >100 MeV" width="400">""".format(d100png)
+        d1000="""<img src="{}" alt="Daily >1000 MeV" width="400">""".format(d1000png)
+        w100="""<img src="{}" alt="Weekly >100 MeV" width="400">""".format(w100png)
+        w1000="""<img src="{}" alt="Weekly >1000 MeV" width="400">""".format(w1000png)
+
+
+        str+="""
+        <tr>
+            <td rowspan="4"> {} </td>
+            <th> Daily 100 MeV to 300 GeV  </th> 
+            <th> Weekly 100 MeV to 300 GeV </th>
+        </tr>
+        <tr>
+            <td> {}  </td> 
+            <td> {}  </td>
+        </tr>
+        <tr>
+            <th> Daily 1 GeV to 300 GeV   </th> 
+            <th> Weekly 1 GeV to 300 GeV </th>
+        </tr>
+        <tr> 
+            <td> {} </td>
+            <td> {} </td>
+        </tr>
+        <tr><td/><td/><td/></tr>
+        """.format(name,d100,w100, d1000, w1000)
+
+    str+="""</table> </center>"""     
+
+    str+="""
+         </body>
+         </html>
+         """
+    
+    return str
 
 
 
@@ -225,12 +280,6 @@ def make_individual_HTML(object_dict):
          </center>
          <div></div>
          """
-
-    
-
-
-
-
     
     #############################################################
     ### 100 MeV to 300 GeV 
@@ -287,9 +336,9 @@ def make_individual_HTML(object_dict):
          </div>
          """.format(res)
 
-    str+="""                                                                                      
-    </body>                                                                                       
-    </html>                                                                                       
+    str+="""
+    </body>
+    </html>
     """
 
     return str
@@ -477,7 +526,9 @@ for object in objects:
     os.chdir("..")
 
 
-    write_main_html(objects)
+str=write_main_html(objects)
+with open ("index.html","w") as f:
+    f.write(str)
 
 
 
