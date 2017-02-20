@@ -102,8 +102,10 @@ class Cat3FGL:
         for i,n in enumerate(names):
             if name in n.upper().replace(" ",""):
                 self.index=i
+                if not self.quiet: print("Cat3FGL:select_object() Found",name)
                 break
         else:
+            if not self.quiet: print("Cat3FGL:select_object() did not find match for",name)
             return None # break not encountered so index not found
 
         if self.tbdata['SpectrumType'][i]=="PowerLaw":
@@ -177,6 +179,10 @@ class Cat3FGL:
         """
         Return the calculated integral flux between two by numerically integrating the best-fit model
         """ 
+
+        if not self._selected():
+            return -1
+
 
         import scipy.integrate as integrate
         result=integrate.quad(self.spectral_model,E_low_MeV, E_high_MeV)

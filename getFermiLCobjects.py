@@ -24,7 +24,7 @@ parser.add_argument('-f', '--file',
                     type=str, 
                     default="",  
                     help=('save results in comma-separated format to given filename '
-                          ' with format: name, URL, ra, dec, z')
+                          ' with format: name, URL, ra, dec, z'))
 
 parser.add_argument('-d', '--DecInterval',
                     type=float, 

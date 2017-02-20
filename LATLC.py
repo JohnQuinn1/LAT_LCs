@@ -16,7 +16,7 @@ class LATLC:
         self.quiet=quiet
 
 
-    def download(self,name,weekly=False):
+    def download(self,name,weekly=False,already_downloaded=False):
         """
         Download and rename the file for the given object.
         If "weekly" is False then it downloads the daily file.".
@@ -40,13 +40,19 @@ class LATLC:
 
 
         if os.path.isfile(FITS):
-            if not self.quiet: print("Removing old file:",FITS)
-            os.remove(FITS)
+            if already_downloaded:
+                if not self.quiet: print("Using already-downloaded file:",FITS)
+                return FITS
+            else:
+                if not self.quiet: print("Removing old file:",FITS)
+                os.remove(FITS)
+
+
 
         if not self.quiet: print("Downloading latest file:",FITS)
 
         remote_file='http://fermi.gsfc.nasa.gov/FTP/glast/data/lat/catalogs/asp/current/lightcurves/'+FITS
-
+        
         if not self.quiet: print("wget:",remote_file)
 
         try:
@@ -56,11 +62,11 @@ class LATLC:
             self.e=e
             if not self.quiet:
                 print("LATLC.download() error:",e)
-            return None
+                return None
         except:
             if not self.quiet:
                 print("Some error occurred...")
-            raise
+                raise
 
         if not self.quiet:
             print()

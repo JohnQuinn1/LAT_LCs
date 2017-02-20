@@ -137,10 +137,9 @@ Crab_fluxes={'FLUX_1000_300000':1.8e-7, 'FLUX_300_1000':5.74e-7, 'FLUX_100_30000
 
 object=map_name.map_name(cfg.name,"LAT_LC")
 
-
 LC=LATLC.LATLC(quiet=cfg.quiet)
 
-FITS=LC.download(object,cfg.weekly)
+FITS=LC.download(object,cfg.weekly,cfg.already_downloaded)
 
 if FITS is None:
     sys.exit(1)
@@ -271,6 +270,8 @@ if cfg.load_mjds:
         plt.fill_between([start, end], ylims, facecolor='red', alpha=0.5,edgecolor='red')
 
 
+
+
 if cfg.Swift:
     swift_file=cfg.Swift
     if swift_file=="get": # "-S given w/o file so must download
@@ -280,17 +281,38 @@ if cfg.Swift:
 
     if swift_file is None:
         if not cfg.quiet: print("Could not download Swift lightcurve for", object)            
+
     else:  # "-S given w file so use
         if not cfg.quiet: print("Loading Swift data from",swift_file)
         swift_data=np.loadtxt(swift_file, skiprows=23, ndmin=2)  # ndmin needed for when only 1 row
+
         swift_mjd=swift_data[:,0]
         swift_dmjd=swift_data[:,1]
         swift_rate=swift_data[:,2]
         swift_raterr=swift_data[:,3]
+
+        swift_ptsi=np.where(swift_raterr >=0.0)
+        swift_ulsi=np.where(swift_raterr <0.0)   # ULs have -1 for error bar
+
         ax2=plt.gca().twinx()
-        ax2.errorbar(swift_mjd, swift_rate, xerr=swift_dmjd, yerr=swift_raterr,fmt='go')
+
+        #### plot error bars
+        ax2.errorbar(swift_mjd[swift_ptsi], swift_rate[swift_ptsi], 
+                     xerr=swift_dmjd[swift_ptsi], yerr=swift_raterr[swift_ptsi],fmt='go')
+
+        #### plot upper limits
+
+        ymin,ymax=plt.ylim()
+        ulsize=(ymax-ymin)/40
+
+        ax2.errorbar(swift_mjd[swift_ulsi], swift_rate[swift_ulsi], 
+                     xerr=swift_dmjd[swift_ulsi], yerr=ulsize, 
+                     uplims=True,fmt='g.', alpha=1)
+
+
         ax2.set_ylabel('Swift XRT cts/s.', color='g')
         ax2.tick_params('y', colors='g')
+
         if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]: # i.e. if Swift has more recent data than LAT
             tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.02+tmin
 
@@ -339,6 +361,9 @@ if cfg.stdout or cfg.file:
     divisor = 7 if cfg.weekly else 1
     index_from_end=cfg.days//divisor
     index_max=len(t)
+
+
+    index_from_end=min(index_from_end,index_max)
 
     for i in range(index_max-index_from_end, index_max):
         if ulf[i]:

@@ -65,8 +65,10 @@ def write_main_html(objects):
     </head>      
                                
     <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
+    <p align="center"> Time of last update of this page:  UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
     <body>
-    """
+    """.format(datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5 )
+
 
     # Make table
 
@@ -77,7 +79,7 @@ def write_main_html(objects):
 
     for object in objects:
         objdict=objects[object]
-        name=objdict['name']
+        name=objdict['name'].replace(" ","")
 
         d100png=name+"/"+objdict['filename_100_daily']+'.png'
         w100png=name+"/"+objdict['filename_100_weekly']+'.png'
@@ -92,6 +94,22 @@ def write_main_html(objects):
         w100="""<img src="{}" alt="Weekly >100 MeV" width="400">""".format(w100png)
         w1000="""<img src="{}" alt="Weekly >1000 MeV" width="400">""".format(w1000png)
 
+
+        infostr=""" <a href="{0}/index.html">{0}</a> <br><br>
+                    z={1}<br><br> 
+                    <b>Last Points: Extrapolated >200 GeV (Crab):<b> <br><br>
+                    <u> Flux_100_300000</u>:<br>
+                    Daily:  {2:.2f} <br>
+                    Weekly: {3:.2f} <br><br>
+                    <u> Flux_1000_300000</u>:<br>
+                    Daily:  {4:.2f} <br>
+                    Weekly: {5:.2f} 
+                    """.format(name,
+                               objdict['z'],
+                               objdict['last_100_daily'][5],
+                               objdict['last_100_weekly'][5],
+                               objdict['last_1000_daily'][5],
+                               objdict['last_1000_weekly'][5])
 
         str+="""
         <tr>
@@ -112,7 +130,7 @@ def write_main_html(objects):
             <td> {} </td>
         </tr>
         <tr><td/><td/><td/></tr>
-        """.format(name,d100,w100, d1000, w1000)
+        """.format(infostr,d100,w100, d1000, w1000)
 
     str+="""</table> </center>"""     
 
@@ -133,7 +151,9 @@ def write_main_html(objects):
 
 def make_LAT_flux_table(f):
     data=np.loadtxt(f)
-    last=data[-5:,:]
+    
+    from_end=min(5,len(data[:,0]))  # some sources have very few points, even ULs!
+    last=data[-from_end:,:]
 
 #         <table style="width:50%">    
     str=""
@@ -406,7 +426,7 @@ command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File,
 
 # load txt file and extract names etc...
 
-LC_File="test.txt"
+LC_File="all_extragalactic.txt"
 
 objects=OrderedDict()
 
@@ -414,7 +434,7 @@ with open(LC_File,"r") as f:
     for line in f:
         fields=line.split(",")
         object=fields[0].replace(" ","")
-        objects[object]={'name':object,
+        objects[object]={'name':fields[0],
                          'LAT_URL':fields[1],
                          'RA':fields[2], 
                          'Dec':fields[3], 
@@ -436,6 +456,7 @@ SLC=SwiftLC.SwiftLC(quiet=True)
 
 
 for object in objects:
+    print("*"*40)
     print(object)
 
     # if directory does not exist make it
@@ -446,8 +467,8 @@ for object in objects:
 
     os.chdir(object)
 
-    for lc_file in glob.glob("*.lc"):
-        os.remove(lc_file)
+#    for lc_file in glob.glob("*.lc"):
+#        os.remove(lc_file)
 
     for png_file in glob.glob("*.png"):
         os.remove(png_file)
@@ -456,20 +477,28 @@ for object in objects:
     #### 3FGL:
 
     LAT3FGL=Cat3FGL.Cat3FGL()
-    LAT3FGL.select_object(object)
-    objects[object]['3FGL_spec_type']=LAT3FGL.get_SpectrumType()
-    if objects[object]['3FGL_spec_type']=="PowerLaw":
-        objects[object]['3FGL_PL_index']="{:.2f}".format(LAT3FGL.get_field('Spectral_Index'))
-        objects[object]['3FGL_flux_100']=LAT3FGL.calc_PL_int_flux(100,300000)
-        objects[object]['3FGL_flux_1000']=LAT3FGL.calc_PL_int_flux(1000,300000)
-        objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)
-        objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)/2.36e-10
+
+    if not LAT3FGL.select_object(object):
+        objects[object]['3FGL_spec_type']=""
+        objects[object]['3FGL_PL_index']="{:.2f}".format(-1)
+        objects[object]['3FGL_flux_100']=-1
+        objects[object]['3FGL_flux_1000']=-1
+        objects[object]['3FGL_flux_gt200GeV']=-1
+        objects[object]['3FGL_frac_gt200GeV']=-1
     else:
-        objects[object]['3FGL_PL_index']=""
-        objects[object]['3FGL_flux_100']=LAT3FGL.calc_int_flux(100,300000)
-        objects[object]['3FGL_flux_1000']=LAT3FGL.calc_int_flux(1000,300000)
-        objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)
-        objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10
+        objects[object]['3FGL_spec_type']=LAT3FGL.get_SpectrumType()
+        if objects[object]['3FGL_spec_type']=="PowerLaw":
+            objects[object]['3FGL_PL_index']="{:.2f}".format(LAT3FGL.get_field('Spectral_Index'))
+            objects[object]['3FGL_flux_100']=LAT3FGL.calc_PL_int_flux(100,300000)
+            objects[object]['3FGL_flux_1000']=LAT3FGL.calc_PL_int_flux(1000,300000)
+            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)
+            objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)/2.36e-10
+        else:
+            objects[object]['3FGL_PL_index']=""
+            objects[object]['3FGL_flux_100']=LAT3FGL.calc_int_flux(100,300000)
+            objects[object]['3FGL_flux_1000']=LAT3FGL.calc_int_flux(1000,300000)
+            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)
+            objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10
     
 
     ##### Swift:
@@ -478,7 +507,10 @@ for object in objects:
     if Swift_LC_file is not None:
         swift_name=map_name.map_name(object,"Swift_LC")
         objects[object]['Swift_URL']='http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name)
-        print('http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name))
+        print(object,'http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name))
+    else:
+        print(object, "Swift LC not found!")
+        objects[object]['Swift_URL']=''
 
 
     # Daily 100 MeV to 300 GeV
