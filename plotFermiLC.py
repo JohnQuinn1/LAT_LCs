@@ -359,11 +359,19 @@ if cfg.remove_FITS:
 if cfg.stdout or cfg.file:
     outstr=""
     divisor = 7 if cfg.weekly else 1
-    index_from_end=cfg.days//divisor
+
     index_max=len(t)
 
+    if cfg.days==0:
+        index_from_end=index_max
+    else:
+        index_from_end=cfg.days//divisor
+
+
+    print(index_from_end, index_max)
 
     index_from_end=min(index_from_end,index_max)
+
 
     for i in range(index_max-index_from_end, index_max):
         if ulf[i]:
