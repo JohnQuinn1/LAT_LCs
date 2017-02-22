@@ -188,16 +188,20 @@ i=np.where(ulf==False)
 
 import Cat3FGL
 cat=Cat3FGL.Cat3FGL(quiet=cfg.quiet)
-cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
+in_3FGL=cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
 
-if F=='FLUX_100_300000':
-    flux_3FGL=cat.calc_int_flux(100,300000)
-elif F=='FLUX_300_1000':
-    flux_3FGL=cat.calc_int_flux(300,1000)
-elif F=='FLUX_1000_300000':
-    flux_3FGL=cat.calc_int_flux(1000,300000)
+if in_3FGL:
 
-flux_3FGL_gt_200GeV=cat.calc_int_flux(200000,50000000)
+    if F=='FLUX_100_300000':
+        flux_3FGL=cat.calc_int_flux(100,300000)
+    elif F=='FLUX_300_1000':
+        flux_3FGL=cat.calc_int_flux(300,1000)
+    elif F=='FLUX_1000_300000':
+        flux_3FGL=cat.calc_int_flux(1000,300000)
+
+        flux_3FGL_gt_200GeV=cat.calc_int_flux(200000,50000000)
+
+
 flux_crab_gt_200GeV=2.36e-10
 
 #############################################################
@@ -250,10 +254,11 @@ if cfg.Crab_flux:
 
 
 if cfg.Average:
-    if not cfg.quiet:
-        print("Plotting object average flux {}: {:.2e} ph cm-2 s-1".format(F,flux_3FGL))
+    if in_3FGL:
+        if not cfg.quiet:
+            print("Plotting object average flux {}: {:.2e} ph cm-2 s-1".format(F,flux_3FGL))
 
-    plt.plot([tmin,tmax], [flux_3FGL,flux_3FGL],'b-')
+        plt.plot([tmin,tmax], [flux_3FGL,flux_3FGL],'b-')
 
 
 
@@ -368,13 +373,11 @@ if cfg.stdout or cfg.file:
         index_from_end=cfg.days//divisor
 
 
-    print(index_from_end, index_max)
-
     index_from_end=min(index_from_end,index_max)
 
 
     for i in range(index_max-index_from_end, index_max):
-        if ulf[i]:
+        if ulf[i] or not in_3FGL:
             ferr=0.0
             flux_ratio_3FGL=0.0
             flux_gt_200GeV=0.0
@@ -384,6 +387,8 @@ if cfg.stdout or cfg.file:
             flux_ratio_3FGL=f[i]/flux_3FGL
             flux_gt_200GeV=f[i]/flux_3FGL * flux_3FGL_gt_200GeV
             flux_frac_crab_gt_200GeV = flux_gt_200GeV/flux_crab_gt_200GeV
+
+
 
         outstr+="{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}    {:4.2f}    {:4.2f}\n".format(t[i], dx[i], f[i], ferr, flux_ratio_3FGL, flux_frac_crab_gt_200GeV)
 

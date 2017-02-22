@@ -45,29 +45,29 @@ def write_main_html(objects):
     <head> 
     <style>
 
-    table, th, td {
+    table, th, td {{
        border: 1px solid black;
        border-collapse: collapse;
        margin-left: auto;
        margin-right: auto;
-    }
+    }}
 
-    th, td {
+    th, td {{
        padding: 5px;
        text-align: left;
-    }
+    }}
 
-    div {
+    div {{
         width:100%;
         height:30px;
-    }
+    }}
     </style>
     </head>      
                                
     <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
-    <p align="center"> Time of last update of this page:  UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
+    <p align="center"> Time of last update of this page:  UT: {0:%Y-%m-%d %H:%M}  (MJD: {1:.3f})</p>     
     <body>
-    """.format(datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5 )
+    """.format(datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5)
 
 
     # Make table
@@ -559,9 +559,10 @@ for object in objects:
 
 
 str=write_main_html(objects)
-with open ("index.html","w") as f:
+with open("index.html","w") as f:
     f.write(str)
 
 
-
 print(json.dumps(objects, sort_keys=True, indent=4, separators=(',', ': ')))
+with open("LATLC_data.json","w") as f:
+    f.write(json.dumps(objects))

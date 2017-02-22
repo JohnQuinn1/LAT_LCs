@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import os
 import sys
 import wget
@@ -71,6 +73,41 @@ class SwiftLC:
          
 
          
+###############################################################################
+
+
+if __name__ == "__main__":
+
+    import argparse
+
+    desc="""
+          Download Swift lightcurve and rename it for a given source.
+          Any existing file called ligtcurve.txt will be removed in the process.
+          """
+
+    parser = argparse.ArgumentParser(description=desc, 
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('-n','--name',type=str, default="", required=True, 
+                        help="Name of object to be downloaded")
+
+    parser.add_argument('-q','--quiet',
+                        action='store_true', 
+                        help="Name of object to be downloaded")
+
+    cfg = parser.parse_args()
+
+
+    sd=SwiftLC(quiet=cfg.quiet)
+
+    sd.download(cfg.name)
+
+
+###############################################################################
+
+
+
+
 
 
 

@@ -4,55 +4,144 @@ import os
 import sys
 import subprocess
 import numpy as np
-
-# Steps:
-#
-# Change to root folder
-#
-# Swift:
-# - make swift page
-# 
-# LAT LCs:
-# - get list of objects
-# - for each object:
-# - - make folder for each object
-# - - change to folder
-# - - download LAT LC for object 
-# - - download swift LC for each object
-# - - generate 4 plots
-# - - extract last flux point for daily point 
-# - - get LAT flux value and extrapolated VHE in terms of Crab (store)
-# - - generate object visibility for coming night and coming month?
-# - - generate web page for object
-# - make main web page with LAT LCs and some text..
-
-
+from collections import OrderedDict
+import json
 
 ###########################################################################
 
 from datetime import datetime
 import ephem
 
-#    <head>
-#    <style>"""
-#    p {{
-#      margin-left:50px;
-#    }}
-#    </style>
-#    <head>
+
+###########################################################################
 
 
-def make_flux_table(f):
+def make_main_html(objects):
+    
+    str="""
+    <!DOCTYPE html>        
+    <html>   
+    <head> 
+    <style>
+
+    table, th, td {{
+       border: 1px solid black;
+       border-collapse: collapse;
+       margin-left: auto;
+       margin-right: auto;
+    }}
+
+    th, td {{
+       padding: 5px;
+       text-align: left;
+    }}
+
+    div {{
+        width:100%;
+        height:30px;
+    }}
+    </style>
+    </head>      
+                               
+    <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
+    <p align="center"> Time of last update of this page:  UT: {0:%Y-%m-%d %H:%M}  (MJD: {1:.3f})</p>     
+    <body>
+    """.format(datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5)
+
+
+    # Make table
+
+    str+="""
+         <center>
+         <table  style="width:90%">    
+         """
+
+    for object in objects:
+        objdict=objects[object]
+        name=objdict['name'].replace(" ","")
+
+        d100png=name+"/"+objdict['filename_100_daily']+'.png'
+        w100png=name+"/"+objdict['filename_100_weekly']+'.png'
+        d1000png=name+"/"+objdict['filename_1000_daily']+'.png'
+        w1000png=name+"/"+objdict['filename_1000_weekly']+'.png'
+
+        d100png=name+"/"+objdict['filename_100_daily']+'.png'
+        w100png=name+"/"+objdict['filename_100_weekly']+'.png'
+
+        d100="""<img src="{}" alt="Daily >100 MeV" width="400">""".format(d100png)
+        d1000="""<img src="{}" alt="Daily >1000 MeV" width="400">""".format(d1000png)
+        w100="""<img src="{}" alt="Weekly >100 MeV" width="400">""".format(w100png)
+        w1000="""<img src="{}" alt="Weekly >1000 MeV" width="400">""".format(w1000png)
+
+
+        infostr=""" <a href="{0}/index.html">{0}</a> <br><br>
+                    z={1}<br><br> 
+                    <b>Last Points: Extrapolated >200 GeV (Crab):</b> <br><br>
+                    <u> Flux_100_300000</u>:<br>
+                    Daily:  {2:.2f} <br>
+                    Weekly: {3:.2f} <br><br>
+                    <u> Flux_1000_300000</u>:<br>
+                    Daily:  {4:.2f} <br>
+                    Weekly: {5:.2f} 
+                    """.format(name,
+                               objdict['z'],
+                               objdict['last_100_daily'][5],
+                               objdict['last_100_weekly'][5],
+                               objdict['last_1000_daily'][5],
+                               objdict['last_1000_weekly'][5])
+
+        str+="""
+        <tr>
+            <td rowspan="4"> {} </td>
+            <th> Daily 100 MeV to 300 GeV  </th> 
+            <th> Weekly 100 MeV to 300 GeV </th>
+        </tr>
+        <tr>
+            <td> {}  </td> 
+            <td> {}  </td>
+        </tr>
+        <tr>
+            <th> Daily 1 GeV to 300 GeV   </th> 
+            <th> Weekly 1 GeV to 300 GeV </th>
+        </tr>
+        <tr> 
+            <td> {} </td>
+            <td> {} </td>
+        </tr>
+        <tr><td/><td/><td/></tr>
+        """.format(infostr,d100,w100, d1000, w1000)
+
+    str+="""</table> </center>"""     
+
+    str+="""
+         </body>
+         </html>
+         """
+    
+    return str
+
+
+
+
+
+###########################################################################
+
+
+
+def make_LAT_flux_table(f):
     data=np.loadtxt(f)
-    last=data[-5:,:]
+    
+    from_end=min(5,len(data[:,0]))  # some sources have very few points, even ULs!
+    last=data[-from_end:,:]
 
+#         <table style="width:50%">    
     str=""
 
     str+="""
          <center>
-         <table style="width:50%">    
+         <table  style="width:50%">    
          <caption> Recent LAT flux values ... </caption>
-         <tr>                                                                                                                                
+         <tr>                                 
             <th align="left"> MJD </th> 
             <th align="left"> dMJD </th>  
             <th align="left"> Flux </th>
@@ -79,83 +168,181 @@ def make_flux_table(f):
                   <td> {} </td>
              </tr>""".format(mjd_s,dmjd_s,flux_s,dflux_s,f3FGL_s,fCr200_s)
                 
-    str+="""</table> <center>"""     
+    str+="""</table> </center>"""     
         
     return str
 
 
 
-def make_individual_HTML(name, object, files):
-    """Write web page for individual object"""
+def make_individual_HTML(object_dict):
+    """Write web page for individual object passed a dictionary of object properties"""
+
+    object=object_dict
 
     str="""                                                                     
     <!DOCTYPE html>        
-    <html>                      
-    <head>                                                                                                                              
-        <style>                                                                                                                         
-        table, th, td {{                                                                                                                 
-            border: 1px solid black;                                                                                                    
-            border-collapse: collapse;                                                                                                  
-            margin-left: auto;                                                                                                          
-            margin-right: auto;                                                                                                         
-        }}                                                                                                                               
-        th, td {{                                                                                                                        
-            padding: 5px;                                                                                                               
-            text-align: left;                                                                                                           
-        }}                                                                                                                               
+    <html>   
+    <head> 
+    <style>
+    table, th, td {{
+       border: 1px solid black;
+       border-collapse: collapse;
+       margin-left: auto;
+       margin-right: auto;                                                                                                  }}                                                                                                                               
+    th, td {{                                                                                                                        
+        padding: 5px;                                                                                                               
+        text-align: left;                                                                                                           
+    }}
+
+    div {{
+        width:100%;
+        height:30px;
+    }}
     </style>                                                                                                                            
     </head>      
                                
     <h1 align="center"> {0} </h1>                        
     <body>
-    """.format(name)                 
+    """.format(object['name'])                 
 
+
+
+    str+="""
+    <p align="center"> LAT Lightcurve site: <a href="{0}">{0}</a></p>                 
+    <p align="center"> Swift site: <a href="{1}">{1}</a></p>                 
+    <p align="center"> NED: <a href="http://nedwww.ipac.caltech.edu/cgi-bin/nph-objsearch?extend=no&of=html&objname={2:}">Query</a></p>
+    <p align="center"> Time of last update of this page:  UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
+    """.format(object['LAT_URL'],object['Swift_URL'],object['name'],datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5 )
+
+
+
+
+    #############################################################
+    str+="""
+         <div></div>
+         <center>
+         <table style="width:50%">    
+         <caption> Object Properties </caption>
+
+         <tr>                                                                                                                                
+            <th align="left"> Property </th> 
+            <th align="left"> Value </th>  
+         </tr>"""
 
     RA=ephem.hours(float(object['RA'])*ephem.pi/180.0)
     Dec=ephem.degrees(float(object['Dec'])*ephem.pi/180.0)
 
     str+="""
-    <p align="center"> RA:   {} deg. = {} </p>
-    <p align="center"> Dec.: {} deg. = {} </p>
-    <p align="center"> z={} </p>
-    """.format(object['RA'], RA, object['Dec'],Dec, object['z'])
+         <tr>
+             <td> R.A. </td>
+             <td> {} </td>
+         </tr>
+         <tr>
+             <td> Dec. </td>
+             <td> {} </td>
+         </tr>
+         <tr>
+             <td> z </td>
+             <td> {} </td>
+         </tr>
+         <tr>
+             <td> 3FGL SpectrumType </td>
+             <td> {} </td>
+         </tr>
+         <tr>
+             <td> 3FGL PL Index </td>
+             <td> {} </td>
+         </tr>
+         <tr>
+             <td> 3FGL Flux_100_300000 </td>
+             <td> {:.2e} </td>
+         </tr>
+         <tr>
+             <td> 3FGL Flux_1000_300000 </td>
+             <td> {:.2e} </td>
+         </tr>
+         <tr>
+             <td> 3FGL Extrap. Crab >200 GeV </td>
+             <td> {:.2f} </td>
+         </tr>
+         """.format(RA, 
+                    Dec, 
+                    object['z'],
+                    object['3FGL_spec_type'],
+                    object['3FGL_PL_index'],
+                    object['3FGL_flux_100'],
+                    object['3FGL_flux_1000'],
+                    object['3FGL_frac_gt200GeV'])
 
     str+="""
-    <p align="center"> Original site: <a href="{0}">{0}</a></p>                 
-    <p align="center"> Time of last update of this page: UT {1:%Y-%m-%d %H:%M} </p>    
-    """.format(object['URL'],datetime.utcnow())
-
-
+         </table>
+         </center>
+         <div></div>
+         """
     
-   #### 100 MeV to 300 GeV:
-    str+="<hr/>"
+    #############################################################
+    ### 100 MeV to 300 GeV 
+    ### Daily:
+    str+="<hr>"
     str+="<center> <h3> LAT light curves: 100 MeV to 300 GeV </h3></center>"
-    for f in files:
-        if "100_300000" in f:
-            str+="""
-                 <center><img src="{0}"> </center>
-                 """.format(f)
+    
+    str+="""<center><img src="{0}"> </center>""".format(object['filename_100_daily']+'.png')
+    str+="""<div></div>"""
+    str+=make_LAT_flux_table(object['filename_100_daily']+'.txt')
+    str+="""<div></div>"""
 
-            str+=make_flux_table(f.replace(".png",".txt")) 
+    ### Weekly:
+    
+    str+="""<center><img src="{0}"> </center>""".format(object['filename_100_weekly']+'.png')
+    str+="""<div></div>"""
+    str+=make_LAT_flux_table(object['filename_100_weekly']+'.txt')
+    str+="""<div></div>"""
+    #############################################################
 
-    str+="<hr/>"
-    str+="<center> <h3> LAT light curves: 1 GeV to 300 GeV </h3></center>"
 
-    for f in files:
-        if "1000_300000" in f:
-            str+="""
-                 <center><img src="{0}"> </center>
-                 """.format(f)
-            str+=make_flux_table(f.replace(".png",".txt")) 
+    #############################################################
+    ### 1000 MeV to 300 GeV 
+    ### Daily:
+    str+="<hr>"
+    str+="<center> <h3> LAT light curves: 1000 MeV to 300 GeV </h3></center>"
+    
+    str+="""<center><img src="{0}"> </center>""".format(object['filename_1000_daily']+'.png')
+    str+="""<div></div>"""
+    str+=make_LAT_flux_table(object['filename_1000_daily']+'.txt')
+    str+="""<div></div>"""
 
-    str+="<hr/>"
 
-    str+="""                                                                                      
-    </body>                                                                                       
-    </html>                                                                                       
+    ### Weekly:
+    
+    str+="""<center><img src="{0}"> </center>""".format(object['filename_1000_weekly']+'.png')
+    str+="""<div></div>"""
+    str+=make_LAT_flux_table(object['filename_1000_weekly']+'.txt')
+    str+="""<div></div>"""
+
+    #############################################################
+
+    str+="""<hr>"""
+
+    str+="""<div></div>"""
+
+    str+="""<center><h3> VERITAS {} visibility tonight </h3></center>""".format(object['name'])
+    
+    command="obs_tool.py -c {} {} 2000".format(object['RA'],object['Dec'])
+    res=subprocess.check_output(command, shell=True).decode('utf-8').strip()                        
+    str+="""
+         <div style="margin:auto; height:auto; width:50%;">
+         <pre style="text-align: left;">{}</pre>
+         </div>
+         """.format(res)
+
+    str+="""
+    </body>
+    </html>
     """
 
     return str
+
+##################################################################
 
 
 ###########################################################################
@@ -184,66 +371,26 @@ except NotADirectoryError:
 
 ###########################################################################
 
-###########################################################################
+#json_file=os.environ.get('BAR_JSON_FILENAME')
 
-# make Swift web page
+#if json_file is None:
+#    if not quiet:
+#        print("No $BAR_JSON_FILENAME set, exiting....")
+#    sys.exit(1)
 
-# default out file is: "Swift_LCs.html"
-res=subprocess.call("makeSwiftLCHTML.py -c -l 7", shell=True)
+json_file="test.json"
 
-###########################################################################
+try:
+    tmpdict = json.load(open(json_file), object_pairs_hook=OrderedDict)
+except FileNotFoundError:
+    print("Error, cannot open:",json_file,"exiting...")
+    sys.exit(1)
 
-###########################################################################
+# sort dictionary into new ordered dictionary by RA
+objects=OrderedDict(sorted(tmpdict.items(), key = lambda x: float(x[1]['RA'])))
 
-# download LAT list
-
-LC_File="LAT_LC_objects.txt"
-DEC_min=32-50
-DEC_max=32+50
-RA_window=7
-z_min=0
-z_max=1.5
-command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File, 
-                                                                       DEC_min, 
-                                                                       DEC_max, 
-                                                                       RA_window, 
-                                                                       z_min, 
-                                                                       z_max)
-
-#print(command)
-#res=subprocess.call(command, shell=True)
-#print(res)
 
 ###########################################################################
-
-# load txt file and extract names etc...
-
-LC_File="test.txt"
-
-objects={}
-
-with open(LC_File,"r") as f:
-    for line in f:
-        fields=line.split(",")
-        object=fields[0].replace(" ","")
-        objects[object]={'URL':fields[1],
-                         'RA':fields[2], 
-                         'Dec':fields[3], 
-                         'z':fields[4]} 
-        
-
-#print(objects)
-        
-
-###########################################################################
-
-# Loop over each object...
-
-import map_name
-import glob
-
-import SwiftLC
-SLC=SwiftLC.SwiftLC(quiet=True)
 
 for name in objects:
     print()
@@ -252,55 +399,24 @@ for name in objects:
 
     # if directpry does not exist make it
     if not os.path.isdir(name):
-        if os.path.isfile(name):
-            os.remove(name)
-        os.mkdir(name)
+        if not quiet:
+            print("Directory",name,"does not exist, skipping...")
+        continue
 
     os.chdir(name)
 
-    for lc_file in glob.glob("*.lc"):
-        os.remove(lc_file)
+    str=make_individual_HTML(objects[name])
 
-    for png_file in glob.glob("*.png"):
-        os.remove(png_file)
-
-
-    Swift_LC_file=SLC.download(name)
-
-    # Daily 100 MeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -a".format(name, "FLUX_100_300000")
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    res=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-
-    # Daily 1 GeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -a".format(name, "FLUX_1000_300000")   
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    res=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-
-
-    # Weekly 100 MeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -a".format(name, "FLUX_100_300000")
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    res=subprocess.check_output(command, shell=True).decode('utf-8')
-
-    # Weekly 1 GeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -a".format(name, "FLUX_1000_300000")   
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    res=subprocess.check_output(command, shell=True).decode('utf-8')
-    
-    files=glob.glob("*.png")
-    
-    s=make_individual_HTML(object,objects[object],files)
-
-    with open("index.html","w") as f:
-        f.write(s)
+    with open ("index.html","w") as f:
+        f.write(str)
 
     os.chdir("..")
 
 
 
-
-
+str=make_main_html(objects)
+with open("index.html","w") as f:
+    f.write(str)
      
 
 
