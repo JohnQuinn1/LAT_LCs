@@ -52,7 +52,7 @@ res=subprocess.call("makeSwiftLCHTML.py -c -l 7", shell=True)
 
 # check the LAT page for date of last update
 
-LATLC_DATE_FILE="LATLC_Last_Update.txt"
+LATLC_DATE_FILE="LATLC_last_update.txt"
 
 try:
     with open(LATLC_DATE_FILE,"r") as f:
@@ -65,11 +65,11 @@ res=subprocess.check_output("getFermiLCobjects.py -m -q ", shell=True).decode('U
 print(res.strip(), last_update.strip())
 
 if res.strip()==last_update.strip():
-    print("Nothing to do...")
     pass
 else:
     with open(LATLC_DATE_FILE,"w") as f:
-        f.write(last_update)
+        f.write(res+'\n')
+
 
     print("going to work...")
 

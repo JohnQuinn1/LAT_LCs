@@ -44,10 +44,11 @@ def make_main_html(objects):
     </head>      
                                
     <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
+    <center> <a href="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/"> Original LAT site </a> </center>
+    <center> <a href="http://www.swift.psu.edu/monitoring/  "> Original Swift site </a> </center>
     <p align="center"> Time of last update of this page:  UT: {0:%Y-%m-%d %H:%M}  (MJD: {1:.3f})</p>     
     <body>
     """.format(datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5)
-
 
     # Make table
 
@@ -412,6 +413,8 @@ for name in objects:
     with open ("index.html","w") as f:
         f.write(str)
 
+    os.chmod("index.html",0o644)
+
     os.chdir("..")
 
 
@@ -420,6 +423,8 @@ for name in objects:
 str=make_main_html(objects)
 with open("index.html","w") as f:
     f.write(str)
+
+os.chmod("index.html",0o644)
      
 
 
