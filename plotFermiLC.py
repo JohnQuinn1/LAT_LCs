@@ -199,7 +199,7 @@ if in_3FGL:
     elif F=='FLUX_1000_300000':
         flux_3FGL=cat.calc_int_flux(1000,300000)
 
-        flux_3FGL_gt_200GeV=cat.calc_int_flux(200000,50000000)
+    flux_3FGL_gt_200GeV=cat.calc_int_flux(200000,50000000)
 
 
 flux_crab_gt_200GeV=2.36e-10
@@ -390,12 +390,22 @@ if cfg.stdout or cfg.file:
 
 
 
-        outstr+="{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}    {:4.2f}    {:4.2f}\n".format(t[i], dx[i], f[i], ferr, flux_ratio_3FGL, flux_frac_crab_gt_200GeV)
+        outstr+="{:8.2f}  {:4.2f}  {:3.2e}  {:3.2e}    {:4.2f}    {:4.2f}\n".format(t[i], 
+                                                                                    dx[i], 
+                                                                                    f[i], 
+                                                                                    ferr, 
+                                                                                    flux_ratio_3FGL, 
+                                                                                    flux_frac_crab_gt_200GeV)
 
 
 if cfg.stdout:
     if not cfg.quiet:
-        print("{:8s}  {:4s}  {:8s}  {:8s}  {:4s}  {:4s}".format("MJD_mid", "dMJD", "Flux", "Flux_err", "Frac3FGL", "FracCrabGt200GeV"))
+        print("{:8s}  {:4s}  {:8s}  {:8s}  {:4s}  {:4s}".format("MJD_mid", 
+                                                                "dMJD", 
+                                                                "Flux", 
+                                                                "Flux_err", 
+                                                                "Frac3FGL", 
+                                                                "FracCrabGt200GeV"))
     print(outstr)
 
 

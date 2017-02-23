@@ -39,23 +39,15 @@ except NotADirectoryError:
 
 ###########################################################################
 
-###########################################################################
-
-# make Swift web page
-
-# default out file is: "Swift_LCs.html"
-res=subprocess.call("makeSwiftLCHTML.py -c -l 7", shell=True)
-
-###########################################################################
 
 ###########################################################################
 
 # download LAT list
 
-LC_File="LAT_LC_objects.txt"
-DEC_min=32-50
-DEC_max=32+50
-RA_window=7
+LC_File="LATLC_objects.txt"
+DEC_min=32-40
+DEC_max=32+40
+RA_window=9
 z_min=0
 z_max=1.5
 command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File, 
@@ -66,14 +58,14 @@ command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File,
                                                                        z_max)
 
 #print(command)
-#res=subprocess.call(command, shell=True)
+res=subprocess.call(command, shell=True)
 #print(res)
 
 ###########################################################################
 
 # load txt file and extract names etc...
 
-LC_File="all_extragalactic.txt"
+#LC_File="all_extragalactic.txt"
 
 #objects=OrderedDict()
 
@@ -89,7 +81,6 @@ with open(LC_File,"r") as f:
                          'Dec':fields[3], 
                          'z':fields[4]} 
         
-
 #print(objects)
         
 
@@ -116,8 +107,8 @@ for object in objects:
 
     os.chdir(object)
 
-#    for lc_file in glob.glob("*.lc"):
-#        os.remove(lc_file)
+    for lc_file in glob.glob("*.lc"):
+        os.remove(lc_file)
 
     for png_file in glob.glob("*.png"):
         os.remove(png_file)
@@ -150,7 +141,7 @@ for object in objects:
             objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10
     
 
-    print(objects[object])
+#    print(objects[object])
 
     ##### Swift:
 
@@ -163,6 +154,9 @@ for object in objects:
         print(object, "Swift LC not found!")
         objects[object]['Swift_URL']=''
 
+
+    ## Needs to either turn off check_output throwin exception with a non=zer return code 
+    ## or else catch and handle
 
     # Daily 100 MeV to 300 GeV
     command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_100_300000")

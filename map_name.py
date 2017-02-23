@@ -37,7 +37,7 @@ def map_name(name, format="3FGL_ASSOC1"):
     objects.append({"accepted":["NGC1275", "3C84"],
                     "3FGL_ASSOC1":"NGC 1275",
                     "Swift_LC":"3C84",
-                    "LAT_LC":"NGC1275"})
+                    "LAT_LC":"NGC 1275"})
 
     objects.append({"accepted":["S41144+40", "B21144+40"],
                     "3FGL_ASSOC1":"S4 1144+40",

@@ -17,7 +17,7 @@ import ephem
 
 
 def make_main_html(objects):
-    
+
     str="""
     <!DOCTYPE html>        
     <html>   
@@ -372,16 +372,17 @@ except NotADirectoryError:
 ###########################################################################
 
 #json_file=os.environ.get('BAR_JSON_FILENAME')
-
+#
 #if json_file is None:
 #    if not quiet:
 #        print("No $BAR_JSON_FILENAME set, exiting....")
 #    sys.exit(1)
 
-json_file="test.json"
+json_file="LATLC_data.json"
+
 
 try:
-    tmpdict = json.load(open(json_file), object_pairs_hook=OrderedDict)
+    tmpdict = json.load(open(json_file))
 except FileNotFoundError:
     print("Error, cannot open:",json_file,"exiting...")
     sys.exit(1)
@@ -389,6 +390,7 @@ except FileNotFoundError:
 # sort dictionary into new ordered dictionary by RA
 objects=OrderedDict(sorted(tmpdict.items(), key = lambda x: float(x[1]['RA'])))
 
+print(objects.keys())
 
 ###########################################################################
 
@@ -411,6 +413,7 @@ for name in objects:
         f.write(str)
 
     os.chdir("..")
+
 
 
 
