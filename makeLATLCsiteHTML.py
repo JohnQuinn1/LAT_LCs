@@ -16,7 +16,14 @@ import ephem
 ###########################################################################
 
 
-def make_main_html(objects):
+def make_main_html(objects,updating=False, prev_LAT_site_update=""):
+
+    if prev_LAT_site_update:
+        LAT_site_update_str="(last updated: {})".format(prev_LAT_site_update)
+    else:
+        LAT_site_update_str=""
+
+
 
     str="""
     <!DOCTYPE html>        
@@ -42,13 +49,19 @@ def make_main_html(objects):
     }}
     </style>
     </head>      
+
+    <body>
                                
     <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
-    <center> <a href="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/"> Original LAT site </a> </center>
+    <center> <a href="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/"> Original LAT site</a> {:0}</center>
     <center> <a href="http://www.swift.psu.edu/monitoring/  "> Original Swift site </a> </center>
-    <p align="center"> Time of last update of this page:  UT: {0:%Y-%m-%d %H:%M}  (MJD: {1:.3f})</p>     
-    <body>
-    """.format(datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5)
+    <p align="center"> Time of last update of this page:  UT: {1:%Y-%m-%d %H:%M}  (MJD: {2:.3f})</p>     
+    """.format(LAT_site_update_str, datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5)
+
+
+    if updating:
+        str+="""<center><font color="red"> LAT site has updated: plots being updated - please check back in few minutes!</font></center><br>"""
+
 
     # Make table
 
@@ -348,27 +361,33 @@ def make_individual_HTML(object_dict):
 
 ###########################################################################
 
-# Change to root folder
 
-root_folder = os.environ.get('BAR_ROOT')
+if __name__ == "__main__":
 
-quiet=False
+    # Change to root folder
 
-if root_folder is None:
-    if not quiet:
-        print("No $BAR_ROOT set, exiting....")
-    sys.exit(1)
+
+
+
+    root_folder = os.environ.get('BAR_ROOT')
+
+    quiet=False
+
+    if root_folder is None:
+        if not quiet:
+            print("No $BAR_ROOT set, exiting....")
+        sys.exit(1)
     
-try:
-    os.chdir(root_folder)
-except FileNotFoundError:
-    if not quiet:
-        print("{} does not exist, exiting...".format(root_folder))
-    sys.exit(1)
-except NotADirectoryError:
-    if not quiet:
-        print("{} is not a directory, exiting...".format(root_folder))
-    sys.exit(1)
+    try:
+        os.chdir(root_folder)
+    except FileNotFoundError:
+        if not quiet:
+            print("{} does not exist, exiting...".format(root_folder))
+        sys.exit(1)
+    except NotADirectoryError:
+        if not quiet:
+            print("{} is not a directory, exiting...".format(root_folder))
+        sys.exit(1)
 
 ###########################################################################
 
@@ -379,52 +398,51 @@ except NotADirectoryError:
 #        print("No $BAR_JSON_FILENAME set, exiting....")
 #    sys.exit(1)
 
-json_file="LATLC_data.json"
+    json_file="LATLC_data.json"
 
+    try:
+        tmpdict = json.load(open(json_file))
+    except FileNotFoundError:
+        print("Error, cannot open:",json_file,"exiting...")
+        sys.exit(1)
 
-try:
-    tmpdict = json.load(open(json_file))
-except FileNotFoundError:
-    print("Error, cannot open:",json_file,"exiting...")
-    sys.exit(1)
+    # sort dictionary into new ordered dictionary by RA
+    objects=OrderedDict(sorted(tmpdict.items(), key = lambda x: float(x[1]['RA'])))
 
-# sort dictionary into new ordered dictionary by RA
-objects=OrderedDict(sorted(tmpdict.items(), key = lambda x: float(x[1]['RA'])))
-
-print(objects.keys())
+   # print(objects.keys())
 
 ###########################################################################
 
-for name in objects:
-    print()
-    print(name)
-    print()
+    for name in objects:
+        print()
+        print(name)
+        print()
 
-    # if directpry does not exist make it
-    if not os.path.isdir(name):
-        if not quiet:
-            print("Directory",name,"does not exist, skipping...")
-        continue
+        # if directpry does not exist make it
+        if not os.path.isdir(name):
+            if not quiet:
+                print("Directory",name,"does not exist, skipping...")
+            continue
 
-    os.chdir(name)
+        os.chdir(name)
 
-    str=make_individual_HTML(objects[name])
+        str=make_individual_HTML(objects[name])
 
-    with open ("index.html","w") as f:
+        with open ("index.html","w") as f:
+            f.write(str)
+
+        os.chmod("index.html",0o644)
+        
+        os.chdir("..")
+
+
+
+
+    str=make_main_html(objects,True,"2016-01-01")
+    with open("index.html","w") as f:
         f.write(str)
 
     os.chmod("index.html",0o644)
-
-    os.chdir("..")
-
-
-
-
-str=make_main_html(objects)
-with open("index.html","w") as f:
-    f.write(str)
-
-os.chmod("index.html",0o644)
      
 
 
