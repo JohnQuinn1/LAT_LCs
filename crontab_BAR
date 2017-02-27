@@ -1,0 +1,1 @@
+0,30 * * * *  . $HOME/.bashrc;  MPLBACKEND="Agg" BAR_Runner.py
