@@ -209,7 +209,7 @@ flux_crab_gt_200GeV=2.36e-10
 
 
 plt.clf()
-plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='o')
+plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='ob')
 
 
 timescale= "weekly" if cfg.weekly else "daily"
