@@ -13,6 +13,26 @@ import Cat3FGL
 
 
 
+###########################################################################
+import makeLATLCSiteHTML
+
+def write_main_site(objects,updating=False, last_update=""):
+    str=makeLATLCSiteHTML.make_main_html(objects,updating,last_update)
+    with open("index.html","w") as f:
+        f.write(str)
+    os.chmod("index.html",0o644)
+
+
+def write_individual_site(object):
+    str=makeLATLCSiteHTML.make_individual_HTML(object)
+    with open ("index.html","w") as f:
+        f.write(str)
+    os.chmod("index.html",0o644)
+
+
+###########################################################################
+
+
 
 
 ###### Main Script
@@ -51,9 +71,9 @@ LATLC_DATE_FILE="LATLC_last_update.txt"
 
 try:
     with open(LATLC_DATE_FILE,"r") as f:
-        last_update=f.readline()
+        LAT_site_last_update=f.readline()
 except:
-    last_update=""
+    LAT_site_last_update=""
 
 ###########################################################################
 
@@ -63,29 +83,19 @@ json_file="LATLC_data.json"
 
 try:
     tmpdict = json.load(open(json_file))
-except FileNotFoundError:
-    print("Error, cannot open:",json_file,"exiting...")
-    sys.exit(1)
-
     # sort dictionary into new ordered dictionary by RA
-objects=OrderedDict(sorted(tmpdict.items(), key = lambda x: float(x[1]['RA'])))
+    objects=OrderedDict(sorted(tmpdict.items(), key = lambda x: float(x[1]['RA'])))
+    write_main_site(objects,True,LAT_site_last_update)
+except FileNotFoundError:
+    pass
 
-import makeLATLCSiteHTML
 
-str=makeLATLCSiteHTML.make_main_html(objects,True,last_update)
-with open("index.html","w") as f:
-    f.write(str)
 
-os.chmod("index.html",0o644)
-
-objects={}  # reset dictionary
+#objects={}  # reset dictionary
 
 
 
 ###########################################################################
-
-
-
 
 
 
@@ -115,20 +125,21 @@ res=subprocess.call(command, shell=True)
 
 #LC_File="all_extragalactic.txt"
 
-#objects=OrderedDict()
+objects=OrderedDict()
 
-objects={}
+#objects={}
 
 with open(LC_File,"r") as f:
     for line in f:
         fields=line.split(",")
         object=fields[0].replace(" ","")
-        objects[object]={'name':fields[0],
+        objects[object]={'name':object,
+                         'name_ws':fields[0],
                          'LAT_URL':fields[1],
                          'RA':fields[2], 
                          'Dec':fields[3], 
-                         'z':fields[4],
-                         'up_to_date':False} 
+                         'z':fields[4]} 
+
         
 #print(objects)
         
@@ -242,11 +253,16 @@ for object in objects:
     data=np.loadtxt(root_filename+".txt")[-1,:]
     objects[object]['last_1000_weekly']=data.tolist()
 
+    write_individual_site(objects[object])
 
     os.chdir("..")
 
 
+write_main_site(objects,False,LAT_site_last_update)
 
-print(json.dumps(objects, sort_keys=True, indent=4, separators=(',', ': ')))
+
+#print(json.dumps(objects, sort_keys=True, indent=4, separators=(',', ': ')))
 with open("LATLC_data.json","w") as f:
     f.write(json.dumps(objects))
+
+

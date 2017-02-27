@@ -16,10 +16,12 @@ import ephem
 ###########################################################################
 
 
-def make_main_html(objects,updating=False, prev_LAT_site_update=""):
+def make_main_html(objects,updating=False, LATLC_last_site_update=""):
 
-    if prev_LAT_site_update:
-        LAT_site_update_str="(last updated: {})".format(prev_LAT_site_update)
+# turn off broswer caching, see:  http://www.tech-faq.com/prevent-caching.html
+
+    if LATLC_last_site_update:
+        LAT_site_update_str="(last updated: {})".format(LATLC_last_site_update)
     else:
         LAT_site_update_str=""
 
@@ -29,38 +31,46 @@ def make_main_html(objects,updating=False, prev_LAT_site_update=""):
     <!DOCTYPE html>        
     <html>   
     <head> 
+
+    <meta http-equiv=”Pragma” content=”no-cache”>
+    <meta http-equiv=”Expires” content=”-1″>
+    <meta http-equiv=”CACHE-CONTROL” content=”NO-CACHE”>
+
     <style>
 
-    table, th, td {{
+    table, th, td {
        border: 1px solid black;
        border-collapse: collapse;
        margin-left: auto;
        margin-right: auto;
-    }}
+    }
 
-    th, td {{
+    th, td {
        padding: 5px;
        text-align: left;
-    }}
+    }
 
-    div {{
+    div {
         width:100%;
         height:30px;
-    }}
+    }
     </style>
     </head>      
 
     <body>
-                               
+    """ 
+
+    str+="""                              
     <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
-    <center> <a href="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/"> Original LAT site</a> {:0}</center>
-    <center> <a href="http://www.swift.psu.edu/monitoring/  "> Original Swift site </a> </center>
+    <center> <a href="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/"> Original LAT site</a> {0:}</center> <br>
+    <center> <a href="http://www.swift.psu.edu/monitoring/"> Original Swift site </a> and 
+             <a href="Swift_LCs.html"> Recent Updates </a> </center><br>
     <p align="center"> Time of last update of this page:  UT: {1:%Y-%m-%d %H:%M}  (MJD: {2:.3f})</p>     
     """.format(LAT_site_update_str, datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5)
 
 
     if updating:
-        str+="""<center><font color="red"> LAT site has updated: plots being updated - please check back in few minutes!</font></center><br>"""
+        str+="""<center><font color="red"> The data and plots on this site are currently updating - please check back soon!</font></center><br>"""
 
 
     # Make table
@@ -72,7 +82,7 @@ def make_main_html(objects,updating=False, prev_LAT_site_update=""):
 
     for object in objects:
         objdict=objects[object]
-        name=objdict['name'].replace(" ","")
+        name=objdict['name']
 
         d100png=name+"/"+objdict['filename_100_daily']+'.png'
         w100png=name+"/"+objdict['filename_100_weekly']+'.png'
@@ -87,22 +97,24 @@ def make_main_html(objects,updating=False, prev_LAT_site_update=""):
         w100="""<img src="{}" alt="Weekly >100 MeV" width="400">""".format(w100png)
         w1000="""<img src="{}" alt="Weekly >1000 MeV" width="400">""".format(w1000png)
 
-
-        infostr=""" <a href="{0}/index.html">{0}</a> <br><br>
-                    z={1}<br><br> 
-                    <b>Last Points: Extrapolated >200 GeV (Crab):</b> <br><br>
-                    <u> Flux_100_300000</u>:<br>
-                    Daily:  {2:.2f} <br>
-                    Weekly: {3:.2f} <br><br>
-                    <u> Flux_1000_300000</u>:<br>
-                    Daily:  {4:.2f} <br>
-                    Weekly: {5:.2f} 
-                    """.format(name,
-                               objdict['z'],
-                               objdict['last_100_daily'][5],
-                               objdict['last_100_weekly'][5],
-                               objdict['last_1000_daily'][5],
-                               objdict['last_1000_weekly'][5])
+    
+        infostr=""" 
+                <a href="{0}/index.html">{1}</a> <br><br>
+                z={2}<br><br> 
+                <b>Last Points: Extrapolated >200 GeV (Crab):</b> <br><br>
+                <u> Flux_100_300000</u>:<br>
+                Daily:  {3:.2f} <br>
+                Weekly: {4:.2f} <br><br>
+                <u> Flux_1000_300000</u>:<br>
+                Daily:  {5:.2f} <br>
+                Weekly: {6:.2f} 
+                """.format(objdict['name'],
+                           objdict['name_ws'],
+                           "{:.3f}".format(objdict['z']),
+                           objdict['last_100_daily'][5],
+                           objdict['last_100_weekly'][5],
+                           objdict['last_1000_daily'][5],
+                           objdict['last_1000_weekly'][5])
 
         str+="""
         <tr>
@@ -217,7 +229,7 @@ def make_individual_HTML(object_dict):
                                
     <h1 align="center"> {0} </h1>                        
     <body>
-    """.format(object['name'])                 
+    """.format(object['name_ws'])                 
 
 
 
@@ -414,9 +426,7 @@ if __name__ == "__main__":
 ###########################################################################
 
     for name in objects:
-        print()
         print(name)
-        print()
 
         # if directpry does not exist make it
         if not os.path.isdir(name):
@@ -438,7 +448,7 @@ if __name__ == "__main__":
 
 
 
-    str=make_main_html(objects,True,"2016-01-01")
+    str=make_main_html(objects)
     with open("index.html","w") as f:
         f.write(str)
 
