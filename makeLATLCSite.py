@@ -105,15 +105,17 @@ except FileNotFoundError:
 LC_File="LATLC_objects.txt"
 DEC_min=32-40
 DEC_max=32+40
-RA_window=9
+RA_before=8
+RA_after=9
 z_min=0
 z_max=1.5
-command="getFermiLCobjects.py -f {} -d {} {} -w {} -z {} {} -q".format(LC_File, 
-                                                                       DEC_min, 
-                                                                       DEC_max, 
-                                                                       RA_window, 
-                                                                       z_min, 
-                                                                       z_max)
+command="getFermiLCobjects.py -f {} -d {} {} -w {} {} -z {} {} -q".format(LC_File, 
+                                                                          DEC_min, 
+                                                                          DEC_max, 
+                                                                          RA_before,
+                                                                          RA_after,
+                                                                          z_min, 
+                                                                          z_max)
 
 #print(command)
 res=subprocess.call(command, shell=True)
@@ -138,7 +140,7 @@ with open(LC_File,"r") as f:
                          'LAT_URL':fields[1],
                          'RA':fields[2], 
                          'Dec':fields[3], 
-                         'z':fields[4]} 
+                         'z':"{:.3f}".format(float(fields[4]))} 
 
         
 #print(objects)

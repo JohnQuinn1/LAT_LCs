@@ -110,7 +110,7 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
                 Weekly: {6:.2f} 
                 """.format(objdict['name'],
                            objdict['name_ws'],
-                           "{:.3f}".format(objdict['z']),
+                           objdict['z'],
                            objdict['last_100_daily'][5],
                            objdict['last_100_weekly'][5],
                            objdict['last_1000_daily'][5],

@@ -34,8 +34,10 @@ parser.add_argument('-d', '--DecInterval',
                     help='Declination interval in degrees.')
 
 parser.add_argument('-w', '--windowRA',
-                    type=float, 
-                    default=0, 
+                    type=float,
+                    nargs=2,
+                    metavar=("before","after"),
+                    default=(12,12), 
                     help='RA window around current Az Sid. @ midnight interval in hours.')
 
 parser.add_argument('-r', '--RAInterval',
@@ -48,7 +50,7 @@ parser.add_argument('-r', '--RAInterval',
 
 parser.add_argument('-z','--zInterval',
                     type=float, 
-                    nargs=2, 
+                    nargs=2,                    
                     metavar=("z low", "z high"),
                     default=(-1000,1000), 
                     help='redshift interval.')
@@ -78,22 +80,23 @@ cfg = parser.parse_args()
 
 ############################################################################################
 
-def make_RA_window(half_window):
+def make_RA_window(window):
     """returns start and end window (in degrees) of RA window centered on
-       Az Sid @ midnight time for today. half_window is a float number indicating the 
+       Az Sid @ midnight time for today. window is a tuple of two float numbers indicating the 
        number of hours either side of the center """
 
     from datetime import datetime
 
-    half_window*=15  # hours to convert to degrees
- 
+    window_before=window[0]*15  # hours to convert to degrees
+    window_after=window[1]*15
+    
     RA_center = datetime.now().timetuple().tm_yday /365 * 360 + 90  
     # Jan 1 has local sidereal time at midnight of ~6 hrs
 
-    RA_lower=RA_center-half_window
+    RA_lower=RA_center-window_before
     if RA_lower<0: RA_lower=RA_lower+360
 
-    RA_upper=RA_center+half_window
+    RA_upper=RA_center+window_after
     if RA_upper>360: RA_upper=RA_upper-360
 
     return RA_lower, RA_upper

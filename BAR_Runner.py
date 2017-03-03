@@ -73,7 +73,7 @@ else:
 
     print("going to work...")
 
-    res=subprocess.call("makeLATLCSite.py > makeLATLCSite.log",shell=True)
+    res=subprocess.call("makeLATLCSite.py &> makeLATLCSite.log",shell=True)
 
 #    res=subprocess.call("makeLATLCSiteData.py > makeLATLCSiteData.log",shell=True)
 #    print("makeLATLCSiteData.py",res)
