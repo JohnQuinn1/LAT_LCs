@@ -84,13 +84,44 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
         objdict=objects[object]
         name=objdict['name']
 
+        
+        #######################################################################################
+        if not objdict['valid']:
+            infostr="""{} <font color="red"> An Error Occurred!</font>""".format(objdict['name_ws'])
+
+            str+="""
+            <tr>
+                 <td rowspan="4"> {} </td>
+                 <th> Daily 100 MeV to 300 GeV  </th> 
+                 <th> Weekly 100 MeV to 300 GeV </th>
+            </tr>
+            <tr>
+                <td>   </td> 
+                <td>  </td>
+            </tr>
+            <tr>
+                <th> Daily 1 GeV to 300 GeV   </th> 
+                <th> Weekly 1 GeV to 300 GeV </th>
+            </tr>
+            <tr> 
+                <td>  </td>
+                <td>  </td>
+            </tr>
+            <tr><td/><td/><td/></tr>
+            """.format(infostr)
+                                                                          
+            continue
+        ########################################################################################
+
+        # valid so ok to write table
+
         d100png=name+"/"+objdict['filename_100_daily']+'.png'
         w100png=name+"/"+objdict['filename_100_weekly']+'.png'
         d1000png=name+"/"+objdict['filename_1000_daily']+'.png'
         w1000png=name+"/"+objdict['filename_1000_weekly']+'.png'
 
-        d100png=name+"/"+objdict['filename_100_daily']+'.png'
-        w100png=name+"/"+objdict['filename_100_weekly']+'.png'
+#        d100png=name+"/"+objdict['filename_100_daily']+'.png'
+#        w100png=name+"/"+objdict['filename_100_weekly']+'.png'
 
         d100="""<img src="{}" alt="Daily >100 MeV" width="400">""".format(d100png)
         d1000="""<img src="{}" alt="Daily >1000 MeV" width="400">""".format(d1000png)
@@ -204,6 +235,10 @@ def make_individual_HTML(object_dict):
     """Write web page for individual object passed a dictionary of object properties"""
 
     object=object_dict
+
+    if not object['valid']:
+        return ""
+
 
     str="""                                                                     
     <!DOCTYPE html>        
@@ -354,7 +389,13 @@ def make_individual_HTML(object_dict):
     str+="""<center><h3> VERITAS {} visibility tonight </h3></center>""".format(object['name'])
     
     command="obs_tool.py -c {} {} 2000".format(object['RA'],object['Dec'])
-    res=subprocess.check_output(command, shell=True).decode('utf-8').strip()                        
+
+    try:
+        res=subprocess.check_output(command, shell=True).decode('utf-8').strip()                        
+    except:
+        res=""
+
+
     str+="""
          <div style="margin:auto; height:auto; width:50%;">
          <pre style="text-align: left;">{}</pre>
@@ -377,8 +418,6 @@ def make_individual_HTML(object_dict):
 if __name__ == "__main__":
 
     # Change to root folder
-
-
 
 
     root_folder = os.environ.get('BAR_ROOT')

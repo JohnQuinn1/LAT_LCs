@@ -206,8 +206,14 @@ for object in objects:
 #    print(objects[object])
 
     ##### Swift:
+    
+    try:
+        Swift_LC_file=SLC.download(object)
+    except:
+        print("Error downloading Swift Lightcurve file! continuing without.")
+        Swift_LC_file=None
 
-    Swift_LC_file=SLC.download(object)
+
     if Swift_LC_file is not None:
         swift_name=map_name.map_name(object,"Swift_LC")
         objects[object]['Swift_URL']='http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name)
@@ -220,42 +226,53 @@ for object in objects:
     ## Needs to either turn off check_output thrown exception with a non-zero return code 
     ## or else catch and handle
 
-    # Daily 100 MeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_100_300000")
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_100_daily']=root_filename
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_100_daily']=data.tolist()
+    try:
+
+        # Daily 100 MeV to 300 GeV
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_100_300000")
+        if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
+        root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
+        objects[object]['filename_100_daily']=root_filename
+        data=np.loadtxt(root_filename+".txt")[-1,:]
+        objects[object]['last_100_daily']=data.tolist()
 
 
-    # Daily 1 GeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_1000_300000")   
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_1000_daily']=root_filename
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_1000_daily']=data.tolist()
+        # Daily 1 GeV to 300 GeV
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_1000_300000")   
+        if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
+        root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
+        objects[object]['filename_1000_daily']=root_filename
+        data=np.loadtxt(root_filename+".txt")[-1,:]
+        objects[object]['last_1000_daily']=data.tolist()
 
 
-    # Weekly 100 MeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_100_300000")
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_100_weekly']=root_filename
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_100_weekly']=data.tolist()
+        # Weekly 100 MeV to 300 GeV
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_100_300000")
+        if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
+        root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
+        objects[object]['filename_100_weekly']=root_filename
+        data=np.loadtxt(root_filename+".txt")[-1,:]
+        objects[object]['last_100_weekly']=data.tolist()
 
 
-    # Weekly 1 GeV to 300 GeV
-    command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_1000_300000")   
-    if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
-    root_filename=subprocess.check_output(command, shell=True).decode('utf-8').strip()
-    objects[object]['filename_1000_weekly']=root_filename    
-    data=np.loadtxt(root_filename+".txt")[-1,:]
-    objects[object]['last_1000_weekly']=data.tolist()
+        # Weekly 1 GeV to 300 GeV
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_1000_300000")   
+        if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
+        root_filename=subprocess.check_output(command, shell=True,stderr=subprocess.STDOUT).decode('utf-8').strip()
+        objects[object]['filename_1000_weekly']=root_filename    
+        data=np.loadtxt(root_filename+".txt")[-1,:]
+        objects[object]['last_1000_weekly']=data.tolist()
 
-    write_individual_site(objects[object])
+
+        objects[object]['valid']=True
+
+        write_individual_site(objects[object])
+
+
+    except subprocess.CalledProcessError as e:
+        print("makeLATLCSite.py: an error occurred processing",objects[object]['name_ws'])
+        print(e)
+        objects[object]['valid']=False
 
     os.chdir("..")
 
