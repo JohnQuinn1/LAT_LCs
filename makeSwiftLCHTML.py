@@ -156,13 +156,19 @@ table=soup.findAll("table")
 
 data=[]
 
-for row in table[2].findAll("tr"):
-    cells=row.findAll("td")
-    process_cells(cells,data)
+# search every table....
+for t in table:
+    for row in t.findAll("tr"):
+        cells=row.findAll("td")
+        process_cells(cells,data)
 
-for row in table[3].findAll("tr"):
-    cells=row.findAll("td")
-    process_cells(cells,data)
+#for row in table[3].findAll("tr"):
+#    cells=row.findAll("td")
+#    process_cells(cells,data)
+#
+#for row in table[4].findAll("tr"):
+#    cells=row.findAll("td")
+#    process_cells(cells,data)
 
 
 data_sorted=sorted(data, key=lambda d: d[1], reverse=True) 
