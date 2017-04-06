@@ -272,7 +272,7 @@ if cfg.load_mjds:
     for start,end in zip(mjds_start, mjds_end):
 #        plt.plot([start, end],[ymjd, ymjd],'r-')
 #        plt.plot(mjd_mid,np.ones(len(mjd_mid))*ymjd,'r.')
-        plt.fill_between([start, end], ylims, facecolor='red', alpha=0.5,edgecolor='red')
+        plt.fill_between([start, end], ylims[1], facecolor='red', alpha=0.5,edgecolor='red')
 
 
 
