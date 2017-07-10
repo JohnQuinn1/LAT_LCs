@@ -209,7 +209,7 @@ flux_crab_gt_200GeV=2.36e-10
 
 
 plt.clf()
-plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='ob')
+plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='ob',markeredgecolor='k')
 
 
 timescale= "weekly" if cfg.weekly else "daily"
@@ -303,7 +303,7 @@ if cfg.Swift:
 
         #### plot error bars
         ax2.errorbar(swift_mjd[swift_ptsi], swift_rate[swift_ptsi], 
-                     xerr=swift_dmjd[swift_ptsi], yerr=swift_raterr[swift_ptsi],fmt='go')
+                     xerr=swift_dmjd[swift_ptsi], yerr=swift_raterr[swift_ptsi],fmt='go', markeredgecolor='k')
 
         #### plot upper limits
 
