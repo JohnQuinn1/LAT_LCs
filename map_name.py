@@ -324,6 +324,11 @@ def map_name(name, format="3FGL_ASSOC1"):
                     "Swift_LC":"S3 2141+17",
                     "LAT_LC":"OX 169"})
 
+    objects.append({"accepted":["3C 345","0FGL J1641.4+3939"],
+                    "3FGL_ASSOC1":"3C345",
+                    "Swift_LC":"3C345",
+                    "LAT_LC":"0FGL J1641.4+3939"})
+
 
 
 
