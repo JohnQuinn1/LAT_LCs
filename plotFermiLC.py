@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser(description=desc,
 parser.add_argument('-d','--days', 
                     type=int, 
                     default=100, 
-                    help="recent number of days to plot, a value of 0 plots all")
+                    help="recent number of days to plot, a value of 0 plots all, -1 ro include Swift taken before LAT")
 
 parser.add_argument('-r','--remove_FITS', 
                     action='store_true', 
@@ -207,9 +207,9 @@ flux_crab_gt_200GeV=2.36e-10
 #############################################################
 
 
-
+plt.figure(figsize=[8,4])
 plt.clf()
-plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='ob',markeredgecolor='k')
+plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='ob',markeredgecolor='k',markersize=5)
 
 
 timescale= "weekly" if cfg.weekly else "daily"
@@ -303,7 +303,8 @@ if cfg.Swift:
 
         #### plot error bars
         ax2.errorbar(swift_mjd[swift_ptsi], swift_rate[swift_ptsi], 
-                     xerr=swift_dmjd[swift_ptsi], yerr=swift_raterr[swift_ptsi],fmt='go', markeredgecolor='k')
+                     xerr=swift_dmjd[swift_ptsi], yerr=swift_raterr[swift_ptsi],
+                     fmt='go', markeredgecolor='k', markersize=5.0)
 
         #### plot upper limits
 
@@ -321,6 +322,11 @@ if cfg.Swift:
         if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]: # i.e. if Swift has more recent data than LAT
             tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.02+tmin
 
+        if cfg.days==-1:
+            if swift_mjd[0]<tmin: # i.e. Swift obs before the first Fermi one
+                tmin=swift_mjd[0]-(tmax-swift_mjd[0])*0.02
+
+
 
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
@@ -328,7 +334,7 @@ plt.axis(xmax=tmax)
 
 
 # for naming of plots....
-if cfg.days==0:
+if cfg.days<=0:
     dur="_all"
 else:
     dur="_last{:d}days".format(cfg.days)
