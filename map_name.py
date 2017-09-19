@@ -91,8 +91,8 @@ def map_name(name, format="3FGL_ASSOC1"):
                     "LAT_LC":"CRATESJ0531-4827"})
 
 
-    objects.append({"accepted":["0716+714","S5 0716+714"],
-                    "3FGL_ASSOC1":"S5 0716+714",
+    objects.append({"accepted":["0716+714","S5 0716+714", "S5 0716+71"],
+                    "3FGL_ASSOC1":"S5 0716+71",
                     "Swift_LC":"S5 0716+714",
                     "LAT_LC":"0716+714"})
 

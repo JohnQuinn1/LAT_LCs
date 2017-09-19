@@ -139,7 +139,7 @@ class Cat3FGL:
 
     def get_all_fields(self):
         """Return all info about selected object"""
-        
+
         if self._selected():
             return self.tbdata[self.index]
 
@@ -326,7 +326,8 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
-    cat.select_object(cfg.name, field=cfg.Name_field)
+    if not cat.select_object(cfg.name, field=cfg.Name_field):
+        sys.exit(1)
 
     if cfg.all_fields:
         field_names=cat.get_field_names()
