@@ -99,6 +99,7 @@ def make_RA_window(window):
     RA_upper=RA_center+window_after
     if RA_upper>360: RA_upper=RA_upper-360
 
+#    print("****",RA_lower, RA_upper, RA_center)
     return RA_lower, RA_upper
 
 ############################################################################################
@@ -116,11 +117,24 @@ def filter(RA, Dec, z, cfg):
         RA_lower = cfg.RAInterval[0]
         RA_upper = cfg.RAInterval[1]
 
-    if (RA_lower <= RA <= RA_upper):
+    if RA_lower > RA_upper:
+        RA_ok= (0 <= RA <= RA_upper) or (RA_lower <= RA <= 360)
+    else:
+        RA_ok=RA_lower <= RA <= RA_upper 
+
+
+        
+#    print(RA_lower, RA_upper, RA,
+#          cfg.DecInterval[0], cfg.DecInterval[1], Dec,
+#          cfg.zInterval[0], cfg.zInterval[1], z, end='')
+          
+    if RA_ok:
         if(cfg.DecInterval[0] <= Dec <= cfg.DecInterval[1]):
             if(cfg.zInterval[0] <= z <= cfg.zInterval[1]):
+#                print(True)
                 return True
 
+#    print(False)
     return False
 
 ############################################################################################
@@ -218,7 +232,7 @@ for row in table.findAll("tr"):
                 if not cfg.quiet: print("not found! assigning z=-1")
                 z=-1
 
-            
+#        print("Filtering", name, end="")    
         if filter(ra,dec,z,cfg):
             names.append(name)
             ras.append(ra)
@@ -226,7 +240,9 @@ for row in table.findAll("tr"):
             zs.append(z)
             links.append(link)
             naccepted+=1
+#            print(" accepted!")
         else:
+#            print(" rejected!")
             pass
 
 

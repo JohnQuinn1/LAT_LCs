@@ -36,6 +36,12 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
     <meta http-equiv=”Expires” content=”-1″>
     <meta http-equiv=”CACHE-CONTROL” content=”NO-CACHE”>
 
+    <meta http-equiv="cache-control" content="max-age=0">
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="expires" content="-1">
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 11:00:00 GMT">
+    <meta http-equiv="pragma" content="no-cache">
+
     <style>
 
     table, th, td {
@@ -244,6 +250,18 @@ def make_individual_HTML(object_dict):
     <!DOCTYPE html>        
     <html>   
     <head> 
+
+    <meta http-equiv=”Pragma” content=”no-cache”>                               
+    <meta http-equiv=”Expires” content=”-1″>                                    
+    <meta http-equiv=”CACHE-CONTROL” content=”NO-CACHE”>                        
+                                                                                
+    <meta http-equiv="cache-control" content="max-age=0">                       
+    <meta http-equiv="cache-control" content="no-cache">                        
+    <meta http-equiv="expires" content="-1">                                    
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 11:00:00 GMT">         
+    <meta http-equiv="pragma" content="no-cache"> 
+
+
     <style>
     table, th, td {{
        border: 1px solid black;

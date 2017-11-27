@@ -43,7 +43,7 @@ except NotADirectoryError:
 # make Swift web page
 
 # default out file is: "Swift_LCs.html"
-res=subprocess.call("makeSwiftLCHTML.py -c -l 7", shell=True)
+res=subprocess.call("makeSwiftLCHTML.py -c -l 14", shell=True)
 
 ###########################################################################
 
@@ -62,7 +62,7 @@ except:
 
 res=subprocess.check_output("getFermiLCobjects.py -m -q ", shell=True).decode('UTF-8')
 
-print(res.strip(), last_update.strip())
+#print(res.strip(), last_update.strip())
 
 if res.strip()==last_update.strip():
     pass
