@@ -192,7 +192,7 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
 
 
 def make_LAT_flux_table(f):
-    data=np.loadtxt(f)
+    data=np.loadtxt(f,ndmin=2)
     
     from_end=min(5,len(data[:,0]))  # some sources have very few points, even ULs!
     last=data[-from_end:,:]
