@@ -233,7 +233,7 @@ for object in objects:
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_100_daily']=root_filename
-        data=np.loadtxt(root_filename+".txt")[-1,:]
+        data=np.loadtxt(root_filename+".txt",ndmin=2)[-1,:]
         objects[object]['last_100_daily']=data.tolist()
 
 
@@ -242,7 +242,7 @@ for object in objects:
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_1000_daily']=root_filename
-        data=np.loadtxt(root_filename+".txt")[-1,:]
+        data=np.loadtxt(root_filename+".txt",ndmin=2)[-1,:]
         objects[object]['last_1000_daily']=data.tolist()
 
 
@@ -251,7 +251,7 @@ for object in objects:
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_100_weekly']=root_filename
-        data=np.loadtxt(root_filename+".txt")[-1,:]
+        data=np.loadtxt(root_filename+".txt",ndmin=2)[-1,:]
         objects[object]['last_100_weekly']=data.tolist()
 
 
@@ -260,7 +260,7 @@ for object in objects:
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True,stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_1000_weekly']=root_filename    
-        data=np.loadtxt(root_filename+".txt")[-1,:]
+        data=np.loadtxt(root_filename+".txt",ndmin=2)[-1,:]
         objects[object]['last_1000_weekly']=data.tolist()
 
 
