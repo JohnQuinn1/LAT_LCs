@@ -81,7 +81,7 @@ def map_name(name, format="3FGL_ASSOC1"):
 
     objects.append({"accepted":["TXS 0518+211", "VER0521+211", "VER J0521+211"],
                     "3FGL_ASSOC1":"TXS 0518+211",
-                    "Swift_LC":"VER J0521+211",
+                    "Swift_LC":"VER J0521+212",
                     "LAT_LC":"VER0521+211"})
 
 
