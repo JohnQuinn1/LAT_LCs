@@ -331,11 +331,6 @@ def map_name(name, format="3FGL_ASSOC1"):
 
 
 
-
-
-
-
-
 # 4C+50.11 not in 3FGL!
 # 3C120 not in 3FGL!
 # PKS0438-43 not in 3FGL!
@@ -356,9 +351,10 @@ def map_name(name, format="3FGL_ASSOC1"):
 
     
     for object in objects:
-        if n in object["accepted"]:
+        accepted=[o.upper().replace(" ","") for o in object["accepted"]]
+        if n in accepted:
             return object[format].replace(" ","")
-    
+
     return name.replace(" ","")
 
 
