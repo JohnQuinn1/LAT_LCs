@@ -4,7 +4,15 @@ import os
 import sys
 import wget
 
+## SSL errors started to occur at end of March 2018
+## Here is a hack to stop them
+## from: http://thomas-cokelaer.info/blog/2016/01/python-certificate-verified-failed/
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import map_name
+
+
 
 class SwiftLC:
     """
