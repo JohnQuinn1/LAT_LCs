@@ -70,8 +70,8 @@ def process_cells(cells,data):
 
 def get_last_cts(name):
     name=name.replace(" ","")
-    LC_URL="http://www.swift.psu.edu/monitoring/data/"+name+"/lightcurve.txt"
-    r=requests.get(LC_URL)
+    LC_URL="https://www.swift.psu.edu/monitoring/data/"+name+"/lightcurve.txt"
+    r=requests.get(LC_URL, verify=False)
     last=r.text.split("\n")[-2].split() # split into lines, take 2nd last and split fields
     return(float(last[2]))  
 
@@ -148,8 +148,8 @@ def make_html_string(data, get_cts=True):
 
 
 
-URL="http://www.swift.psu.edu/monitoring/"
-page=requests.get(URL)
+URL="https://www.swift.psu.edu/monitoring/"
+page=requests.get(URL,verify=False)
 soup=BeautifulSoup(page.content,'lxml')
 table=soup.findAll("table")
 
