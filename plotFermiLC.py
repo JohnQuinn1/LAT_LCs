@@ -132,6 +132,10 @@ parser.add_argument('-m', '--MJD_interval',
                     metavar=("Begin","End"),
                     help=("MJD interval to be plotted"))
 
+parser.add_argument('-y', '--y_max',
+                    action='store_true',
+                    help=("y_max on graph (Swift and LAT based on MJD window rather than entire lightcurve"))
+
 
 cfg = parser.parse_args()
 
@@ -246,6 +250,14 @@ plt.axis(ymin=0)
 plt.grid()
 
 
+# Set ymax if necessary
+if cfg.y_max:
+    y_max_LAT=np.max(1.05*(f+fe)[(t>=tmin) & (t<=tmax)])
+    plt.axis(ymax=y_max_LAT)
+
+
+
+
 
 # prevent axes from being displayed as, for example,  5.773e4 + offset
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
@@ -343,6 +355,9 @@ if cfg.Swift:
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 
+if cfg.y_max:
+    y_max_XRT=np.max(1.05*(swift_rate+swift_raterr)[(swift_mjd>=tmin) & (swift_mjd<=tmax)])
+    plt.axis(ymax=y_max_XRT)
 
 
 # for naming of plots....
@@ -350,6 +365,9 @@ if cfg.days<=0:
     dur="_all"
 else:
     dur="_last{:d}days".format(cfg.days)
+
+if cfg.MJD_interval:
+    dur="_{:.2f}_to_{:.2f}".format(*cfg.MJD_interval)
 
 
 root_filename=object+"_"+timescale+"_"+F+dur
