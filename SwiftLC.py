@@ -12,8 +12,6 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 import map_name
 
-
-
 class SwiftLC:
     """
     Class for downloading Swift lightcurves ('Overall Light Curve')
@@ -54,7 +52,7 @@ class SwiftLC:
             if not self.quiet: print("Removing local file:",filename)
             os.remove(filename)
 
-        self.remote_filename="http://www.swift.psu.edu/monitoring/data/"+swift_name+"/lightcurve.txt"
+        self.remote_filename="https://www.swift.psu.edu/monitoring/data/"+swift_name+"/lightcurve.txt"
         if not self.quiet: print("Downloading latest file:",self.remote_filename)
 
 
