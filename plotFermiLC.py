@@ -359,6 +359,8 @@ if cfg.y_max:
     y_max_XRT=np.max(1.05*(swift_rate+swift_raterr)[(swift_mjd>=tmin) & (swift_mjd<=tmax)])
     plt.axis(ymax=y_max_XRT)
 
+plt.tight_layout()
+
 
 # for naming of plots....
 if cfg.days<=0:
