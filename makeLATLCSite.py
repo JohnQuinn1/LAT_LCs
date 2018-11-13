@@ -263,7 +263,6 @@ for object in objects:
         data=np.loadtxt(root_filename+".txt",ndmin=2)[-1,:]
         objects[object]['last_1000_weekly']=data.tolist()
 
-
         objects[object]['valid']=True
 
         write_individual_site(objects[object])
