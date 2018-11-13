@@ -126,6 +126,16 @@ parser.add_argument('-A', '--Average',
                     help=("plot a horizontal line indicating the object's 3FGL average flux"
                           " (calculated by numericaly integrating 3FGL spectral model)"))
 
+parser.add_argument('-m', '--MJD_interval',
+                    nargs=2,
+                    type=float,
+                    metavar=("Begin","End"),
+                    help=("MJD interval to be plotted"))
+
+parser.add_argument('-y', '--y_max',
+                    action='store_true',
+                    help=("y_max on graph (Swift and LAT based on MJD window rather than entire lightcurve"))
+
 
 cfg = parser.parse_args()
 
@@ -220,17 +230,32 @@ plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 ax=plt.gca()
 ax.yaxis.major.formatter._useMathText=True
 
-if cfg.days>0:
-    tmin=int(max(t)-cfg.days)
-else:
-    tmin=min(t)-(max(t)-min(t))*0.02
 
-tmax=int(max(t)+dx[-1]-tmin)*1.02+tmin
+if cfg.MJD_interval:
+    tmin=cfg.MJD_interval[0]
+    tmax=cfg.MJD_interval[1]
+else:
+    if cfg.days>0:
+        tmin=int(max(t)-cfg.days)
+    else:
+        tmin=min(t)-(max(t)-min(t))*0.02
+
+    tmax=int(max(t)+dx[-1]-tmin)*1.02+tmin
+
+
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 plt.axis(ymin=0)
 #plt.axis(ymax=0.8e-5)
 plt.grid()
+
+
+# Set ymax if necessary
+if cfg.y_max:
+    y_max_LAT=np.max(1.05*(f+fe)[(t>=tmin) & (t<=tmax)])
+    plt.axis(ymax=y_max_LAT)
+
+
 
 
 
@@ -319,18 +344,22 @@ if cfg.Swift:
         ax2.set_ylabel('Swift XRT cts/s.', color='g')
         ax2.tick_params('y', colors='g')
 
-        if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]: # i.e. if Swift has more recent data than LAT
-            tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.02+tmin
+        if not cfg.MJD_interval:
+            if swift_mjd[-1]+swift_dmjd[-1] > t[-1] + dx[-1]: # i.e. if Swift has more recent data than LAT
+                tmax=int(max(swift_mjd)+swift_dmjd[-1]-tmin)*1.02+tmin
 
-        if cfg.days==-1:
-            if swift_mjd[0]<tmin: # i.e. Swift obs before the first Fermi one
-                tmin=swift_mjd[0]-(tmax-swift_mjd[0])*0.02
-
-
+            if cfg.days==-1:
+                if swift_mjd[0]<tmin: # i.e. Swift obs before the first Fermi one
+                    tmin=swift_mjd[0]-(tmax-swift_mjd[0])*0.02
 
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 
+if cfg.y_max:
+    y_max_XRT=np.max(1.05*(swift_rate+swift_raterr)[(swift_mjd>=tmin) & (swift_mjd<=tmax)])
+    plt.axis(ymax=y_max_XRT)
+
+plt.tight_layout()
 
 
 # for naming of plots....
@@ -338,6 +367,9 @@ if cfg.days<=0:
     dur="_all"
 else:
     dur="_last{:d}days".format(cfg.days)
+
+if cfg.MJD_interval:
+    dur="_{:.2f}_to_{:.2f}".format(*cfg.MJD_interval)
 
 
 root_filename=object+"_"+timescale+"_"+F+dur
@@ -373,7 +405,7 @@ if cfg.stdout or cfg.file:
 
     index_max=len(t)
 
-    if cfg.days==0:
+    if cfg.days==0 or cfg.MJD_interval:
         index_from_end=index_max
     else:
         index_from_end=cfg.days//divisor
