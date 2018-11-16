@@ -34,7 +34,7 @@ class Cat3FGL:
         the path and name of 3FGL FITS file..
 
         Note: some of the field names in the FITS file do not match the 
-        descriptions at http://heasarc.gsfc.nasa.gov/W3Browse/fermi/fermilpsc.html,
+        descriptions at https://heasarc.gsfc.nasa.gov/W3Browse/fermi/fermilpsc.html,
         for example: web site: 'Flux_0p3_1_GeV' is 'Flux300_1000' in the FITS file.
 
         Note, you can access any field for object index or selected index with, e.g.:

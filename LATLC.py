@@ -51,7 +51,7 @@ class LATLC:
 
         if not self.quiet: print("Downloading latest file:",FITS)
 
-        remote_file='http://fermi.gsfc.nasa.gov/FTP/glast/data/lat/catalogs/asp/current/lightcurves/'+FITS
+        remote_file='https://fermi.gsfc.nasa.gov/FTP/glast/data/lat/catalogs/asp/current/lightcurves/'+FITS
         
         if not self.quiet: print("wget:",remote_file)
 

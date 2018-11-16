@@ -145,7 +145,7 @@ from astroquery.exceptions import RemoteServiceError
 
 
 import requests
-URL='http://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/'
+URL='https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/'
 page=requests.get(URL)
 if not cfg.quiet: print("Successfully downloaded:",URL)
 
