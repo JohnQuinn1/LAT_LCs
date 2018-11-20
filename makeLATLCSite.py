@@ -216,8 +216,8 @@ for object in objects:
 
     if Swift_LC_file is not None:
         swift_name=map_name.map_name(object,"Swift_LC")
-        objects[object]['Swift_URL']='http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name)
-        print(object,'http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name))
+        objects[object]['Swift_URL']='https://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name)
+        print(object,'https://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name))
     else:
         print(object, "Swift LC not found!")
         objects[object]['Swift_URL']=''
