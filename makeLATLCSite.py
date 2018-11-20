@@ -278,9 +278,3 @@ for object in objects:
 
 write_main_site(objects,False,LAT_site_last_update)
 
-
-#print(json.dumps(objects, sort_keys=True, indent=4, separators=(',', ': ')))
-with open("LATLC_data.json","w") as f:
-    f.write(json.dumps(objects))
-
-
