@@ -142,11 +142,12 @@ def filter(RA, Dec, z, cfg):
 import sys
 from astroquery.ned import Ned
 from astroquery.exceptions import RemoteServiceError
-
+from astroquery.exceptions import TimeoutError
 
 import requests
 URL='http://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/'
 page=requests.get(URL)
+
 if not cfg.quiet: print("Successfully downloaded:",URL)
 
 
@@ -231,6 +232,9 @@ for row in table.findAll("tr"):
             except RemoteServiceError: # i.e. object not found
                 if not cfg.quiet: print("not found! assigning z=-1")
                 z=-1
+            except TimeoutError:
+                if not cfg.quiet: print("timeout error contacting NED!")
+                z=0.0
 
 #        print("Filtering", name, end="")    
         if filter(ra,dec,z,cfg):
