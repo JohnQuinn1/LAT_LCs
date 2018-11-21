@@ -40,6 +40,7 @@ parser.add_argument('-w', '--windowRA',
                     default=(12,12), 
                     help='RA window around current Az Sid. @ midnight interval in hours.')
 
+# Below option does not work because windowRA is always selected due to defaults - logic needs to be fixed!
 parser.add_argument('-r', '--RAInterval',
                     type=float, 
                     nargs=2, 
@@ -54,6 +55,7 @@ parser.add_argument('-z','--zInterval',
                     metavar=("z low", "z high"),
                     default=(-1000,1000), 
                     help='redshift interval.')
+
 
 parser.add_argument('-n','--no_ned', 
                     action='store_true', 
@@ -113,15 +115,15 @@ def filter(RA, Dec, z, cfg):
 
     if cfg.windowRA:
         RA_lower, RA_upper = make_RA_window(cfg.windowRA)
-    else:
+    else: # this never gets executed!
         RA_lower = cfg.RAInterval[0]
         RA_upper = cfg.RAInterval[1]
 
-    if RA_lower > RA_upper:
+
+    if RA_lower >= RA_upper:
         RA_ok= (0 <= RA <= RA_upper) or (RA_lower <= RA <= 360)
     else:
         RA_ok=RA_lower <= RA <= RA_upper 
-
 
         
 #    print(RA_lower, RA_upper, RA,
@@ -252,8 +254,10 @@ for row in table.findAll("tr"):
 
 
 # find longest name length for printing
-maxw=max([len(name) for name in names])
-
+if len(names)>0:
+    maxw=max([len(name) for name in names])
+else:
+    mawx=0
 
 if not cfg.quiet:
     print()
