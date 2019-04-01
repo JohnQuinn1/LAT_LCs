@@ -24,7 +24,7 @@ class SwiftLC:
     In [2]: sw=SwiftLC.SwiftLC()
 
     In [3]: sw.download("Mrk501")
-    Downloading latest file: http://www.swift.psu.edu/monitoring/data/Mrk501/lightcurve.txt
+    Downloading latest file: http://www.swift.psu.edu/monitoring/data_new/Mrk501/lightcurve.txt
     100% [..............................................................................] 45425 / 45425
     Renaming lightcurve.txt to Swift_Mrk501.txt
     """
@@ -52,7 +52,7 @@ class SwiftLC:
             if not self.quiet: print("Removing local file:",filename)
             os.remove(filename)
 
-        self.remote_filename="https://www.swift.psu.edu/monitoring/data/"+swift_name+"/lightcurve.txt"
+        self.remote_filename="https://www.swift.psu.edu/monitoring/data_new/"+swift_name+"/lightcurve.txt"
         if not self.quiet: print("Downloading latest file:",self.remote_filename)
 
 
