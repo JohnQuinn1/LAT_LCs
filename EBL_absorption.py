@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[146]:
+# In[95]:
 
 
 from gammapy.spectrum.models import Absorption
@@ -27,24 +27,27 @@ class EBLAbsorption:
         try:
             self.ebl=Absorption.read_builtin(str(self.model))
         except KeyError as error:
-            print(error, "isn't a valid name of model. See help(EBLAbsorption())")
-            ebllogger.warning("invalid name of model")
-            sys.exit(1)
+            sys.stdout.write(str(error) + "isn't a valid name of model. See help(EBLAbsorption())")
+#             ebllogger.warning("invalid name of model")
+#             sys.exit(1)
     
     def absorption(self,redshift,energy):
-        """ This function calculates absorption of EBL according to model stated in class definition and returns the 'surviving energy'
+        """ This function calculates absorption of EBL according to model stated in class definition 
+        and returns the 'surviving energy'
         parameters:
                 redshift (int or float)
                 energy (tuple*u.unit)
                             where, for example, unit=TeV
-                minimum valid energy is 0.8 TeV"""
-        if min(energy)<0.8*u.TeV:
-                ebllogger.warning("energy out of range => too small")
-                print("energy out of range => too small. Min valid energy = 0.8 TeV")
-                sys.exit(1)
-        return self.ebl.evaluate((energy),redshift)
+                minimum valid energy is 200 GeV"""
 
+        if min(energy)<200*u.GeV:
+            sys.stdout.write("energy out of range => too small")
+            return(1)
+        else:
+            return self.ebl.evaluate((energy),redshift)
         
+    def get_flux(self,redshift,energy):
+        return(self.absorption(redshift,energy)*energy)
 
 #######################################################################
 
@@ -53,9 +56,16 @@ if __name__ == "__main__":
     logging.basicConfig(filename='EBLAbsorption.log',level=logging.WARNING,format='%(asctime)s %(message)s',                    datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
-# In[147]:
+# In[96]:
 
 
 a=EBLAbsorption("franceschini")
-print(a.absorption(0.5,(1,2,6)*u.GeV))
+print(a.absorption(0.1,(100,2000,6000)*u.GeV))
+print(a.get_flux(0.1,(1000,2000)*u.GeV))
+
+
+# In[ ]:
+
+
+
 
