@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[11]:
+# In[ ]:
 
 
 from gammapy.spectrum.models import Absorption
@@ -69,22 +69,27 @@ class EBLAbsorption:
 
 if __name__ == "__main__":
     
-    logging.basicConfig(level=logging.WARNING,format='%(asctime)s %(message)s',                    datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(level=logging.WARNING)
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-M','--model_and_absorption',help="choose absorption model ('franceschini' or 'dominguez' or 'finke'),state redshift (float) and energy (float),(energy is assumed to be in TeV)",required=False,nargs=3)
+    parser.add_argument('-m','--model',
+                        type=str,
+                        choices=['franceschini','dominguez','finke'],
+                        default='franceschini',
+                        help="choose absorption model. default is 'franceschnini'")
+
+    parser.add_argument('redshift',
+                        type=float,
+                        help='Redshift (z) (float)')
     
+    parser.add_argument('energy',
+                        type=float,
+                        help='Energy (TeV) (float)')
+
     cfg = parser.parse_args()
     
-    if cfg.model_and_absorption:
-        try:
-            print(EBLAbsorption(str(cfg.model_and_absorption[0])).absorption(float(cfg.model_and_absorption[1]),float(cfg.model_and_absorption[2])))
-        except ValueError:
-            ebllogger.warning("incorrect redshift or energy input. Please input type float")
-                
-
-
-# In[ ]:
-
-
-
+    if cfg.model:
+        EBL=EBLAbsorption(cfg.model)
+        
+    print(EBL.absorption(cfg.energy,cfg.redshift))
+        
 
