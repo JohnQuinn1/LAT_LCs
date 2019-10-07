@@ -217,6 +217,11 @@ for row in table.findAll("tr"):
             else:
                 print("Now quering NED...", end="", flush=True)
 
+        ## also "GB6 B1310+4844" is found on the NED web page but
+        ## not with the astropy ned query which finds "B1310+4844"
+        if name=="GB6 B1310+4844":
+            name="B1310+4844"
+        
 
         # Now query NED...
         if cfg.no_ned:
@@ -225,7 +230,16 @@ for row in table.findAll("tr"):
             try:
                 q=Ned.query_object(name)
                 nedz=q['Redshift']
-                if nedz.mask: # True if invalid/data missing (i.e. redshift missing)
+
+                ## 2019-10-07
+                ## NED has Crab Pulsar but the mask is empty
+                ## add check based on length of mask
+
+                if nedz.mask.size==0:
+                    # object in NED but z empty - probably galactic: assign -1
+                    z=0.0
+                    if not cfg.quiet: print("found! z field empty!, assigning 0.0")                
+                elif nedz.mask: # True if invalid/data missing (i.e. redshift missing)
                     z=0.0
                     if not cfg.quiet: print("found! no z!, assigning 0.0")
                 else:
@@ -233,7 +247,7 @@ for row in table.findAll("tr"):
                     if not cfg.quiet: print("found! z=",z)
             except RemoteServiceError: # i.e. object not found
                 if not cfg.quiet: print("not found! assigning z=-1")
-                z=-1
+                z=0.0
             except TimeoutError:
                 if not cfg.quiet: print("timeout error contacting NED!")
                 z=0.0
