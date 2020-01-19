@@ -216,8 +216,8 @@ for object in objects:
 
     if Swift_LC_file is not None:
         swift_name=map_name.map_name(object,"Swift_LC")
-        objects[object]['Swift_URL']='http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name)
-        print(object,'http://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name))
+        objects[object]['Swift_URL']='https://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name)
+        print(object,'https://www.swift.psu.edu/monitoring/source.php?source={}'.format(swift_name))
     else:
         print(object, "Swift LC not found!")
         objects[object]['Swift_URL']=''
@@ -263,7 +263,6 @@ for object in objects:
         data=np.loadtxt(root_filename+".txt",ndmin=2)[-1,:]
         objects[object]['last_1000_weekly']=data.tolist()
 
-
         objects[object]['valid']=True
 
         write_individual_site(objects[object])
@@ -278,10 +277,4 @@ for object in objects:
 
 
 write_main_site(objects,False,LAT_site_last_update)
-
-
-#print(json.dumps(objects, sort_keys=True, indent=4, separators=(',', ': ')))
-with open("LATLC_data.json","w") as f:
-    f.write(json.dumps(objects))
-
 

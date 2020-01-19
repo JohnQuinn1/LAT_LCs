@@ -70,11 +70,16 @@ def process_cells(cells,data):
 
 def get_last_cts(name):
     name=name.replace(" ","")
-    LC_URL="https://www.swift.psu.edu/monitoring/data/"+name+"/lightcurve.txt"
+    # Swift new data folder "data_new" instead of "data" in November 2018
+    LC_URL="https://www.swift.psu.edu/monitoring/data_new/"+name+"/lightcurve.txt"
     r=requests.get(LC_URL, verify=False)
-    last=r.text.split("\n")[-2].split() # split into lines, take 2nd last and split fields
-    return(float(last[2]))  
-
+    lines=r.text.split("\n")
+    # 23 line header + blank line at end - make sure at least two data lines
+    if len(lines)>25: 
+        last=lines[-2].split() # split into lines, take 2nd, last and split fields
+        return(float(last[2]))  
+    else:
+        return(0)
 
 
 def make_html_string(data, get_cts=True):

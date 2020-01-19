@@ -69,7 +69,7 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
     str+="""                              
     <h1 align="center"> Fermi-LAT and Swift Lightcurves </h1> 
     <center> <a href="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/msl_lc/"> Original LAT site</a> {0:}</center> <br>
-    <center> <a href="http://www.swift.psu.edu/monitoring/"> Original Swift site </a> and 
+    <center> <a href="https://www.swift.psu.edu/monitoring/"> Original Swift site </a> and 
              <a href="Swift_LCs.html"> Recent Updates </a> </center><br>
     <p align="center"> Time of last update of this page:  UT: {1:%Y-%m-%d %H:%M}  (MJD: {2:.3f})</p>     
     """.format(LAT_site_update_str, datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5)
