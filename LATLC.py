@@ -1,7 +1,6 @@
 import os
 import sys
 import wget
-
 import map_name
 
 class LATLC:
