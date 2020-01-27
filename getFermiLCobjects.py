@@ -133,6 +133,7 @@ def filter(RA, Dec, z, cfg):
     if RA_ok:
         if(cfg.DecInterval[0] <= Dec <= cfg.DecInterval[1]):
             if(cfg.zInterval[0] <= z <= cfg.zInterval[1]):
+
 #                print(True)
                 return True
 
@@ -219,8 +220,10 @@ for row in table.findAll("tr"):
 
         ## also "GB6 B1310+4844" is found on the NED web page but
         ## not with the astropy ned query which finds "B1310+4844"
+
+        NEDname=name
         if name=="GB6 B1310+4844":
-            name="B1310+4844"
+            NEDname="B1310+4844"
         
 
         # Now query NED...
@@ -228,7 +231,7 @@ for row in table.findAll("tr"):
             z=0
         else:
             try:
-                q=Ned.query_object(name)
+                q=Ned.query_object(NEDname)
                 nedz=q['Redshift']
 
                 ## 2019-10-07
