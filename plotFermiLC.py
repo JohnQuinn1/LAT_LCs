@@ -254,6 +254,10 @@ plt.grid()
 if cfg.y_max:
     y_max_LAT=np.max(1.05*(f+fe)[(t>=tmin) & (t<=tmax)])
     plt.axis(ymax=y_max_LAT)
+else:
+    y_max_LAT=np.max(1.05*(f+fe))
+    plt.axis(ymax=y_max_LAT)
+
 
 
 
@@ -267,14 +271,16 @@ plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 ii=np.where(ulf==True)
 ymin,ymax=plt.ylim()
 ulsize=(ymax-ymin)/40
-plt.errorbar(t[ii],f[ii],yerr=ulsize, uplims=True, xerr=dx[ii],fmt='b.', alpha=0.1)
+plt.errorbar(t[ii], f[ii], yerr=ulsize,
+             uplims=True, xerr=dx[ii],
+             fmt='b.', alpha=0.1)
 
 
 if cfg.Crab_flux:
     cf=Crab_fluxes[F]  # F previously defined as selection of flux energy range
     if not cfg.quiet:
         print("Plotting Crab flux {}: {} ph cm-2 s-1".format(F,cf))
-    plt.plot([tmin,tmax], [cf,cf],'g-')
+    plt.plot([tmin,tmax], [cf,cf],'m-')
 
 
 
