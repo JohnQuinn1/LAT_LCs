@@ -132,9 +132,14 @@ parser.add_argument('-m', '--MJD_interval',
                     metavar=("Begin","End"),
                     help=("MJD interval to be plotted"))
 
-parser.add_argument('-y', '--y_max',
+parser.add_argument('-ymw', '--y_max_window',
                     action='store_true',
-                    help=("y_max on graph (Swift and LAT based on MJD window rather than entire lightcurve"))
+                    help=("y max on graph (Swift and LAT) based on MJD window rather than entire lightcurve"))
+
+parser.add_argument('-yml','--y_max_LAT', 
+                    type=float, 
+                    default=-1, 
+                    help="set ymax on Fermi light curve - negative value ignored.")
 
 
 cfg = parser.parse_args()
@@ -251,14 +256,16 @@ plt.grid()
 
 
 # Set ymax if necessary
-if cfg.y_max:
+if cfg.y_max_window:
     y_max_LAT=np.max(1.05*(f+fe)[(t>=tmin) & (t<=tmax)])
     plt.axis(ymax=y_max_LAT)
 else:
     y_max_LAT=np.max(1.05*(f+fe))
     plt.axis(ymax=y_max_LAT)
 
-
+if cfg.y_max_LAT > 0:
+    plt.axis(ymax=cfg.y_max_LAT)
+                    
 
 
 
@@ -361,7 +368,7 @@ if cfg.Swift:
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 
-if cfg.y_max:
+if cfg.y_max_window:
     y_max_XRT=np.max(1.05*(swift_rate+swift_raterr)[(swift_mjd>=tmin) & (swift_mjd<=tmax)])
     plt.axis(ymax=y_max_XRT)
 
