@@ -19,7 +19,6 @@ import sys
 
 import argparse
 desc="""Download and plot Fermi-LAT light curves. 
-Only data points are plotted - upper limits are ignored.
 Note: the Fermi lightcurve names have all spaces removed, 
 thus giving names like "CTA 102" will automatically be 
 translated to "CTA102". The filenames are case sensitive and must
@@ -136,6 +135,10 @@ parser.add_argument('-ymw', '--y_max_window',
                     action='store_true',
                     help=("y max on graph (Swift and LAT) based on MJD window rather than entire lightcurve"))
 
+parser.add_argument('-ymp', '--y_max_points_only',
+                    action='store_true',
+                    help=("y max on graph (LAT) based on points only - ULs not used in calculation"))
+
 parser.add_argument('-yml','--y_max_LAT', 
                     type=float, 
                     default=-1, 
@@ -196,8 +199,8 @@ ulf=np.array(tbdata[UL])
 t=51910+x/(60*60*24)  # convert mission secs to MJD                                                                    
 
 # which points are ULs?
-i=np.where(ulf==False)
-
+i_pt=np.where(ulf==False)
+i_ul=np.where(ulf==True)
 
 #############################################################
 
@@ -224,7 +227,7 @@ flux_crab_gt_200GeV=2.36e-10
 
 plt.figure(figsize=[8,4])
 plt.clf()
-plt.errorbar(t[i],f[i],fe[i],xerr=dx[i],fmt='ob',markeredgecolor='k',markersize=5)
+plt.errorbar(t[i_pt],f[i_pt],fe[i_pt],xerr=dx[i_pt],fmt='ob',markeredgecolor='k',markersize=5)
 
 
 timescale= "weekly" if cfg.weekly else "daily"
@@ -256,11 +259,21 @@ plt.grid()
 
 
 # Set ymax if necessary
-if cfg.y_max_window:
-    y_max_LAT=np.max(1.05*(f+fe)[(t>=tmin) & (t<=tmax)])
-    plt.axis(ymax=y_max_LAT)
+
+if cfg.y_max_points_only:
+    LAT_fluxes_for_lims=f[i_pt]+fe[i_pt]
+    LAT_fluxes_for_lims_t=t[i_pt]
 else:
-    y_max_LAT=np.max(1.05*(f+fe))
+    LAT_fluxes_for_lims=f+fe
+    LAT_fluxes_for_lims_t=t
+
+if cfg.y_max_window:
+    LAT_window_fluxes=1.05*LAT_fluxes_for_lims[(LAT_fluxes_for_lims_t>=tmin) & (LAT_fluxes_for_lims_t<=tmax)]
+    if len(LAT_window_fluxes)>0:
+        y_max_LAT=np.max(LAT_window_fluxes)
+        plt.axis(ymax=y_max_LAT)
+else:
+    y_max_LAT=np.max(1.05*LAT_fluxes_for_lims)
     plt.axis(ymax=y_max_LAT)
 
 if cfg.y_max_LAT > 0:
@@ -275,11 +288,11 @@ plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
 
 # Plot the upper limits
-ii=np.where(ulf==True)
+#ii=np.where(ulf==True)
 ymin,ymax=plt.ylim()
 ulsize=(ymax-ymin)/40
-plt.errorbar(t[ii], f[ii], yerr=ulsize,
-             uplims=True, xerr=dx[ii],
+plt.errorbar(t[i_ul], f[i_ul], yerr=ulsize,
+             uplims=True, xerr=dx[i_ul],
              fmt='b.', alpha=0.1)
 
 
@@ -365,12 +378,19 @@ if cfg.Swift:
                 if swift_mjd[0]<tmin: # i.e. Swift obs before the first Fermi one
                     tmin=swift_mjd[0]-(tmax-swift_mjd[0])*0.02
 
+
+        if cfg.y_max_window:
+            XRT_window_counts=1.05*(swift_rate+swift_raterr)[(swift_mjd>=tmin) & (swift_mjd<=tmax)]
+            if len(XRT_window_counts) >0:
+                y_max_XRT=np.max(XRT_window_counts)
+                ax2.axis(ymax=y_max_XRT)
+
+
+                    
+                    
 plt.axis(xmin=tmin)
 plt.axis(xmax=tmax)
 
-if cfg.y_max_window:
-    y_max_XRT=np.max(1.05*(swift_rate+swift_raterr)[(swift_mjd>=tmin) & (swift_mjd<=tmax)])
-    plt.axis(ymax=y_max_XRT)
 
 plt.tight_layout()
 
