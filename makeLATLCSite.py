@@ -229,7 +229,7 @@ for object in objects:
     try:
 
         # Daily 100 MeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R -ymw".format(object, "FLUX_100_300000")
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R -ymw -ymp".format(object, "FLUX_100_300000")
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_100_daily']=root_filename
@@ -238,7 +238,7 @@ for object in objects:
 
 
         # Daily 1 GeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R -ymw".format(object, "FLUX_1000_300000")   
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R -ymw -ymp".format(object, "FLUX_1000_300000")   
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_1000_daily']=root_filename
@@ -247,7 +247,7 @@ for object in objects:
 
 
         # Weekly 100 MeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R -ymw".format(object, "FLUX_100_300000")
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R -ymw -ymp".format(object, "FLUX_100_300000")
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_100_weekly']=root_filename
@@ -256,7 +256,7 @@ for object in objects:
 
 
         # Weekly 1 GeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R -ymw".format(object, "FLUX_1000_300000")   
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R -ymw -ymp".format(object, "FLUX_1000_300000")   
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True,stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_1000_weekly']=root_filename    
