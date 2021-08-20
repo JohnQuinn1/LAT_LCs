@@ -3,7 +3,7 @@
 from astropy.io import fits
 import numpy as np
 
-#hdulist = fits.open("gll_psc_v16.fit")                                                                                                                
+#hdulist = fits.open("gll_psc_v16.fit")                                      
 # np.count_nonzero(c.tbdata['SpectrumType'] == "PowerLaw")
 # 2523
 #
