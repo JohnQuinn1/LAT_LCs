@@ -1,9 +1,11 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 from astropy.io import fits
 import numpy as np
+import astropy.units as u
 
-#hdulist = fits.open("gll_psc_v16.fit")                                      
+
+#hdulist = fits.open("gll_psc_v16.fit")                                                                                                                
 # np.count_nonzero(c.tbdata['SpectrumType'] == "PowerLaw")
 # 2523
 #
@@ -21,6 +23,11 @@ import numpy as np
 import os
 import sys
 import map_name
+import gammapy #EBL
+from gammapy.modeling.models import SpectralModel #EBL
+from gammapy.modeling.models import EBLAbsorptionNormSpectralModel #EBL
+import astropy.units as u #EBL
+import matplotlib.pyplot as plt #me
 
 
 class Cat3FGL:
@@ -109,12 +116,15 @@ class Cat3FGL:
         else:
             if not self.quiet: print("Cat3FGL:select_object() did not find match for",name)
             return None # break not encountered so index not found
-
+        global Gamma, K, E0, b  #THIS IS NEW
         if self.tbdata['SpectrumType'][i]=="PowerLaw":
             K=self.tbdata['Flux_Density'][i]
             Gamma=self.tbdata['Spectral_Index'][i]
             E0=self.tbdata['Pivot_Energy'][i]
             self.spectral_model = lambda E: K*(E/E0)**(-Gamma)
+            global beta
+            global alpha, Ec
+       
 
         elif self.tbdata['SpectrumType'][i]=="LogParabola":
             K=self.tbdata['Flux_Density'][i]
@@ -125,6 +135,7 @@ class Cat3FGL:
 
         # elif self.tbdata['SpectrumType']=="PLExpCutoff":
         # I gather "PLExpCutoff" and "PLSuperExpCutoff" distinguished via parameters:
+        
         else:  
             K=self.tbdata['Flux_Density'][i]
             Gamma=self.tbdata['Spectral_Index'][i]
@@ -162,7 +173,7 @@ class Cat3FGL:
         Return the calculated integral flux between two energies based on powerlaw model
         if the spectrum type is a PowerLaw
         """ 
-
+        
         if not self._selected():
             return -1
 
@@ -173,8 +184,11 @@ class Cat3FGL:
         E_pivot=self.tbdata['Pivot_Energy'][self.index]
         gamma=self.tbdata['Powerlaw_Index'][self.index]
         C=self.tbdata['Flux_Density'][self.index]
-
-        return C/(1-gamma)*(E_high_MeV**(1-gamma) - E_low_MeV**(1-gamma)) / E_pivot**(-gamma)
+       
+        resultPL=C/(1-gamma)*(E_high_MeV**(1-gamma) - E_low_MeV**(1-gamma)) / E_pivot**(-gamma)
+        resultPLunits = resultPL*u.Unit('cm-2 s-1') #adding proper units
+        return resultPLunits
+        
 
 
     def calc_int_flux(self, E_low_MeV, E_high_MeV):
@@ -185,12 +199,12 @@ class Cat3FGL:
         if not self._selected():
             return -1
 
-
+        
         import scipy.integrate as integrate
         result=integrate.quad(self.spectral_model,E_low_MeV, E_high_MeV)
-#        if result[0]/result[1] < 10:
-#            print("Warning, large error:",*result)
+        
         return result[0]
+        
 
 
     def get_field_names(self):
@@ -211,9 +225,65 @@ class Cat3FGL:
 
         if self._selected():
             return self.tbdata['SpectrumType'][self.index]
+        
+##################################EBL########################################
+
+
+
+    def calc_int_absorbed_flux_gammapy(self,E_low, E_high,model,redshift):
+        
+        #input in MeV
+       
+        if not self._selected():
+            print("no object is selected, please use -n option to select an object")
+            return None
+        
+        energy=E_low*u.TeV
+        readbuiltin=EBLAbsorptionNormSpectralModel.read_builtin(model)
+
+        # checking for inputs out of range of models and invalid inputs
+        try:
+            if ((energy))<min(readbuiltin.energy): 
+                    print("ENERGY OUT OF RANGE FOR MODEL "+str(model)+", min energy="+str(min(readbuiltin.energy)))
+        except TypeError:
+            print("INCORRECT ENERGY INPUT. See help(EBLAbsorption().absorption)")
+            return(None)
+        #try:
+            #if (redshift<min(readbuiltin.param)) or (redshift>max(readbuiltin.param)):
+                    #Cat4logger.warning("REDSHIFT OUT OF RANGE FOR MODEL "+str(model)+" "+"; "+str(min(readbuiltin.param))+"<redshift<"+str(max(readbuiltin.param)))
+        #except TypeError:
+            #print("INCORRECT REDSHIFT INPUT. See help(EBLAbsorption().absorption)")
+            #return(None)
+            
+            
+
+        #calculating absorbed flux
+        selfmodel=self.tbdata['SpectrumType'][self.index]
+        try:
+            if selfmodel=="PowerLaw":
+                var=gammapy.modeling.models.PowerLawSpectralModel(index=Gamma,amplitude=K*u.Unit('cm-2 s-1 MeV-1'),reference=E0*u.MeV)
+            elif selfmodel=="LogParabola":
+                var=gammapy.modeling.models.LogParabolaSpectralModel.from_log10(amplitude=K*u.Unit('cm-2 s-1 MeV-1'),reference=E0*u.MeV,alpha=alpha,beta=beta)
+            else:
+                var=gammapy.modeling.models.SuperExpCutoffPowerLaw3FGLSpectralModel(amplitude=K*u.Unit('cm-2 s-1 MeV-1'),reference=E0*u.MeV,ecut=Ec*u.MeV,index_1=Gamma,index_2=b)
+           #a=gammapy.modeling.models.AbsorbedSpectralModel(var,Absorption.read_builtin(model),float(redshift)) original line
+
+            absorption=gammapy.modeling.models.EBLAbsorptionNormSpectralModel.read_builtin(model,redshift=float(redshift)) #edited this line for gammapy0.18.2
+            a = var * absorption 
+            EBL=a.integral(float(E_low)*u.MeV,float(E_high)*u.MeV)
+            #print(EBL.to(u.Unit('cm-2 s-1')))
+            return(EBL.to(u.Unit('cm-2 s-1')))
+            #return(a.integral(float(E_low)*u.MeV,float(E_high)*u.MeV))
+        except ValueError as e:
+            print("your input is not a float or int, try again")
+            print(e)
+            return None
+        #except:
+            #print("something went wrong while calculating integral flux")
+            #return None
 
             
-##########################################################################
+###########################BACK TO SAME###############################################
 
 if __name__ == "__main__":
 
@@ -227,7 +297,7 @@ if __name__ == "__main__":
     desc="""
          Get information from 3FGL catalogue. It uses environment variable $CAT3FGL to
          point to the 3FGL FITS file location (including name) - if not found the program
-         will look in the current (or user specified) directory for the cataloge with default name.
+         will look in the current (or user specified) directory for the catalogue with default name.
 
          The catalogue can be dowloaded from: https://fermi.gsfc.nasa.gov/ssc/data/access/lat/4yr_catalog/
          Direct link: https://fermi.gsfc.nasa.gov/ssc/data/access/lat/4yr_catalog/gll_psc_v16.fit
@@ -281,6 +351,22 @@ if __name__ == "__main__":
                         metavar=("E_lower_MeV","E_upper_MeV"),
                         help=("print the PL-calculated integrated flux (ph cm^-2 s^-1) in energy range"))
 
+######################## EBL ######################################
+    parser.add_argument('-IGA','--integral_absorbed_flux_gammapy', 
+                        nargs=3,
+                        type=float,
+                        metavar=("E_lower_MeV","E_upper_MeV", "redshift_z"),
+                        help=("print the best-model numerically integrated flux (ph cm^-2 s^-1) in energy range. energy input in MeV. choose model using -m option (default is 'franceschini)')"))
+    
+    parser.add_argument('-m','--model',
+                        type=str,
+                        choices=['franceschini','dominguez','finke'],
+                        default='franceschini',
+                        help="choose absorption model. default is 'franceschini'")
+ 
+#######################BACK TO SAME#####################################
+    cfg = parser.parse_args()
+
 
     cfg = parser.parse_args()
 
@@ -307,7 +393,7 @@ if __name__ == "__main__":
             print("Some error occurred...")
             #raise
         print("Exiting...")
-        sys.exit(1)
+        s.exit(1)
 
 
     cat=Cat3FGL()
@@ -356,16 +442,14 @@ if __name__ == "__main__":
     if cfg.PL_integral_flux:
         print(cat.calc_PL_int_flux(cfg.PL_integral_flux[0], cfg.PL_integral_flux[1]))
 
-#        print(i,n)
-#        src_name=tbdata['Source_Name'][i]
-#        spec_type=tbdata['SpectrumType'][i]
-##        gamma=tbdata['Spectral_Index'][i]
-#        gamma=tbdata['Powerlaw_Index'][i]
-#        Epivot=tbdata['Pivot_Energy'][i] # MeV
-#        C=tbdata['Flux_Density'][i] # at the pivot energy, ph/cm2/s/MeV
-#        F_300_1000=tbdata['Flux300_1000'][i]
-#        print(src_name,spec_type, gamma, C, Epivot)
-#        print("Flux 300-1000 MeV:",int_flux(C, gamma, Epivot, 300, 1000), F_300_1000)
-#        print("Flux 100-300000 MeV:",int_flux(C, gamma, Epivot, 100, 300000))
+################################## EBL ###########################################
+    if cfg.model:
+        chosenmodel=cfg.model
+       
+        
+    if cfg.integral_absorbed_flux_gammapy:
+        print(cat.calc_int_absorbed_flux_gammapy(cfg.integral_absorbed_flux_gammapy[0], cfg.integral_absorbed_flux_gammapy[1],chosenmodel,cfg.integral_absorbed_flux_gammapy[2]))
+
+
 
 
