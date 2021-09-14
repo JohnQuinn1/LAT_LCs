@@ -6,6 +6,8 @@ import subprocess
 import numpy as np
 from collections import OrderedDict
 import json
+import astropy.units as u
+
 
 ###########################################################################
 
@@ -145,6 +147,7 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
                 <u> Flux_1000_300000</u>:<br>
                 Daily:  {5:.2f} <br>
                 Weekly: {6:.2f} 
+                
                 """.format(objdict['name'],
                            objdict['name_ws'],
                            objdict['z'],
@@ -152,6 +155,8 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
                            objdict['last_100_weekly'][5],
                            objdict['last_1000_daily'][5],
                            objdict['last_1000_weekly'][5])
+                           
+                           
 
         str+="""
         <tr>
@@ -290,7 +295,7 @@ def make_individual_HTML(object_dict):
     <p align="center"> LAT Lightcurve site: <a href="{0}">{0}</a></p>                 
     <p align="center"> Swift site: <a href="{1}">{1}</a></p>                 
     <p align="center"> NED: <a href="http://nedwww.ipac.caltech.edu/cgi-bin/nph-objsearch?extend=no&of=html&objname={2:}">Query</a></p>
-    <p align="center"> Time of last update of this page:  UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
+    <p align="center"> Time of last update of this page: UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
     """.format(object['LAT_URL'],object['Swift_URL'],object['name'],datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5 )
 
 
@@ -344,6 +349,16 @@ def make_individual_HTML(object_dict):
              <td> 3FGL Extrap. Crab >200 GeV </td>
              <td> {:.2f} </td>
          </tr>
+
+         <tr>
+             <td> 3FGL Flux After EBL Absorption </td>
+             <td> {:.2e} </td>
+         </tr>
+         <tr>
+             <td> 3FGL EBL Crab Fraction </td>
+             <td> {:.2f} </td>
+         </tr>
+         
          """.format(RA, 
                     Dec, 
                     object['z'],
@@ -351,7 +366,10 @@ def make_individual_HTML(object_dict):
                     object['3FGL_PL_index'],
                     object['3FGL_flux_100'],
                     object['3FGL_flux_1000'],
-                    object['3FGL_frac_gt200GeV'])
+                    object['3FGL_frac_gt200GeV'],
+                    object['3FGL_EBL_abs'],
+                    object['ExtrapCrabEBL'])
+                    
 
     str+="""
          </table>

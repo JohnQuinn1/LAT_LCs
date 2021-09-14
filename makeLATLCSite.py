@@ -10,6 +10,8 @@ from collections import OrderedDict
 import numpy
 import json
 import Cat3FGL
+import astropy.units as u
+
 
 
 
@@ -106,7 +108,7 @@ LC_File="LATLC_objects.txt"
 DEC_min=32-40
 DEC_max=32+40
 RA_before=8
-RA_after=10
+RA_after=9
 z_min=0
 z_max=1.5
 command="getFermiLCobjects.py -f {} -d {} {} -w {} {} -z {} {} -q".format(LC_File, 
@@ -179,29 +181,45 @@ for object in objects:
     #### 3FGL:
 
     LAT3FGL=Cat3FGL.Cat3FGL()
+    
 
     if not LAT3FGL.select_object(object):
         objects[object]['3FGL_spec_type']=""
-        objects[object]['3FGL_PL_index']="{:.2f}".format(-1)
+        objects[object]['3FGL_PL_index']="{:.2f}".format(-1) 	
         objects[object]['3FGL_flux_100']=-1
         objects[object]['3FGL_flux_1000']=-1
         objects[object]['3FGL_flux_gt200GeV']=-1
         objects[object]['3FGL_frac_gt200GeV']=-1
+        objects[object]['3FGL_EBL_abs']=-1 
+        objects[object]['ExtrapCrabEBL']=-1
     else:
         objects[object]['3FGL_spec_type']=LAT3FGL.get_SpectrumType()
+        z=float(objects[object]['z'])
         if objects[object]['3FGL_spec_type']=="PowerLaw":
             objects[object]['3FGL_PL_index']="{:.2f}".format(LAT3FGL.get_field('Spectral_Index'))
             objects[object]['3FGL_flux_100']=LAT3FGL.calc_PL_int_flux(100,300000)
             objects[object]['3FGL_flux_1000']=LAT3FGL.calc_PL_int_flux(1000,300000)
-            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)
-            objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)/2.36e-10
+            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)  
+            objects[object]['3FGL_frac_gt200GeV']=(LAT3FGL.calc_PL_int_flux(2e5,2e7)/2.36e-10)*u.Unit('cm^2 s') #making fraction dimesionless
+            objects[object]['3FGL_EBL_abs']=LAT3FGL.calc_int_absorbed_flux_gammapy(100000,20000000,'franceschini',z) 
+            E=LAT3FGL.calc_int_absorbed_flux_gammapy(100000,20000000,'franceschini',z)
+            DimlessEBL=E.item() #making EBL value dimensionless to divide by crab flux
+            objects[object]['ExtrapCrabEBL']=(((DimlessEBL)/2.36e-10)*u.Unit('cm^2 s'))
+            
+            
         else:
             objects[object]['3FGL_PL_index']=""
-            objects[object]['3FGL_flux_100']=LAT3FGL.calc_int_flux(100,300000)
-            objects[object]['3FGL_flux_1000']=LAT3FGL.calc_int_flux(1000,300000)
-            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)
-            objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10
-    
+            objects[object]['3FGL_flux_100']=LAT3FGL.calc_int_flux(100,300000)*u.Unit('cm^-2 s^-1') 
+            objects[object]['3FGL_flux_1000']=LAT3FGL.calc_int_flux(1000,300000)*u.Unit('cm^-2 s^-1') 
+            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)*u.Unit('cm^-2 s^-1')          
+
+            objects[object]['3FGL_frac_gt200GeV']=(LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10)#*u.Unit('cm^2 s') #making fraction dimensionless
+            objects[object]['3FGL_EBL_abs']=LAT3FGL.calc_int_absorbed_flux_gammapy(100000,20000000,'franceschini',z)
+            E=LAT3FGL.calc_int_absorbed_flux_gammapy(100000,20000000,'franceschini',z)
+            DimlessEBL=E.item()
+            objects[object]['ExtrapCrabEBL']=(((DimlessEBL)/2.36e-10)*u.Unit('cm^2 s'))
+
+               
 
 #    print(objects[object])
 
@@ -229,7 +247,7 @@ for object in objects:
     try:
 
         # Daily 100 MeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R -ymw -ymp".format(object, "FLUX_100_300000")
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_100_300000")
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_100_daily']=root_filename
@@ -238,7 +256,7 @@ for object in objects:
 
 
         # Daily 1 GeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R -ymw -ymp".format(object, "FLUX_1000_300000")   
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -F -R".format(object, "FLUX_1000_300000")   
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_1000_daily']=root_filename
@@ -247,7 +265,7 @@ for object in objects:
 
 
         # Weekly 100 MeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R -ymw -ymp".format(object, "FLUX_100_300000")
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_100_300000")
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_100_weekly']=root_filename
@@ -256,7 +274,7 @@ for object in objects:
 
 
         # Weekly 1 GeV to 300 GeV
-        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R -ymw -ymp".format(object, "FLUX_1000_300000")   
+        command="plotFermiLC.py -A -a -n {} -e {} -q -N -w -F -R".format(object, "FLUX_1000_300000")   
         if Swift_LC_file: command+=" -S {}".format(Swift_LC_file)
         root_filename=subprocess.check_output(command, shell=True,stderr=subprocess.STDOUT).decode('utf-8').strip()
         objects[object]['filename_1000_weekly']=root_filename    
