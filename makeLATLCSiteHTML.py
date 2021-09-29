@@ -6,6 +6,8 @@ import subprocess
 import numpy as np
 from collections import OrderedDict
 import json
+import astropy.units as u
+
 
 ###########################################################################
 
@@ -144,14 +146,21 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
                 Weekly: {4:.2f} <br><br>
                 <u> Flux_1000_300000</u>:<br>
                 Daily:  {5:.2f} <br>
-                Weekly: {6:.2f} 
+                Weekly: {6:.2f} <br><br>
+                <u> EBL corrected crab fraction</u>:<br>
+                Frac: {7:4.2f} 
+
+                
                 """.format(objdict['name'],
                            objdict['name_ws'],
                            objdict['z'],
                            objdict['last_100_daily'][5],
                            objdict['last_100_weekly'][5],
                            objdict['last_1000_daily'][5],
-                           objdict['last_1000_weekly'][5])
+                           objdict['last_1000_weekly'][5],
+                           objdict['ExtrapCrabEBL'])
+                           
+                           
 
         str+="""
         <tr>
@@ -191,9 +200,9 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
 
 
 
-def make_LAT_flux_table(f):
+def make_LAT_flux_table(f,EBLratio):
     data=np.loadtxt(f,ndmin=2)
-    
+
     from_end=min(5,len(data[:,0]))  # some sources have very few points, even ULs!
     last=data[-from_end:,:]
 
@@ -211,6 +220,7 @@ def make_LAT_flux_table(f):
             <th align="left"> dFlux </th>
             <th align="left"> Frac3FGL </th>
             <th align="left"> FracCrab>200GeV </th>
+            <th align="left"> EBLFracCrab>200GeV </th>
          </tr>"""
 
     for i in range(last.shape[0]):
@@ -220,6 +230,7 @@ def make_LAT_flux_table(f):
         dflux_s="{:4.2e}".format(last[i,3])
         f3FGL_s="{:4.2f}".format(last[i,4])
         fCr200_s="{:4.2f}".format(last[i,5])
+        EBLfCr200_s=((float(fCr200_s)/(EBLratio)))
                 
         str+="""
              <tr> 
@@ -229,7 +240,8 @@ def make_LAT_flux_table(f):
                   <td> {} </td>
                   <td> {} </td>
                   <td> {} </td>
-             </tr>""".format(mjd_s,dmjd_s,flux_s,dflux_s,f3FGL_s,fCr200_s)
+                  <td> {:.2f} </td>
+             </tr>""".format(mjd_s,dmjd_s,flux_s,dflux_s,f3FGL_s,fCr200_s,EBLfCr200_s)
                 
     str+="""</table> </center>"""     
         
@@ -290,7 +302,7 @@ def make_individual_HTML(object_dict):
     <p align="center"> LAT Lightcurve site: <a href="{0}">{0}</a></p>                 
     <p align="center"> Swift site: <a href="{1}">{1}</a></p>                 
     <p align="center"> NED: <a href="http://nedwww.ipac.caltech.edu/cgi-bin/nph-objsearch?extend=no&of=html&objname={2:}">Query</a></p>
-    <p align="center"> Time of last update of this page:  UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
+    <p align="center"> Time of last update of this page: UT: {3:%Y-%m-%d %H:%M}  (MJD: {4:.3f})</p>     
     """.format(object['LAT_URL'],object['Swift_URL'],object['name'],datetime.utcnow(), ephem.julian_date(datetime.utcnow())-2400000.5 )
 
 
@@ -341,9 +353,23 @@ def make_individual_HTML(object_dict):
              <td> {:.2e} </td>
          </tr>
          <tr>
+             <td> 3FGL Flux  >200 GeV </td>
+             <td> {:.2e} </td>
+         </tr>
+         <tr>
              <td> 3FGL Extrap. Crab >200 GeV </td>
              <td> {:.2f} </td>
          </tr>
+
+         <tr>
+             <td> 3FGL Flux After EBL Absorption >200GeV </td>
+             <td> {:.2e} </td>
+         </tr>
+         <tr>
+             <td> 3FGL EBL Crab Fraction >200GeV </td>
+             <td> {:.2f} </td>
+         </tr>
+         
          """.format(RA, 
                     Dec, 
                     object['z'],
@@ -351,7 +377,11 @@ def make_individual_HTML(object_dict):
                     object['3FGL_PL_index'],
                     object['3FGL_flux_100'],
                     object['3FGL_flux_1000'],
-                    object['3FGL_frac_gt200GeV'])
+                    object['3FGL_flux_gt200GeV'],
+                    object['3FGL_frac_gt200GeV'],
+                    object['3FGL_EBL_abs'],
+                    object['ExtrapCrabEBL'])
+                    
 
     str+="""
          </table>
@@ -362,19 +392,20 @@ def make_individual_HTML(object_dict):
     #############################################################
     ### 100 MeV to 300 GeV 
     ### Daily:
+
     str+="<hr>"
     str+="<center> <h3> LAT light curves: 100 MeV to 300 GeV </h3></center>"
     
     str+="""<center><img src="{0}"> </center>""".format(object['filename_100_daily']+'.png')
     str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_100_daily']+'.txt')
+    str+=make_LAT_flux_table(object['filename_100_daily']+'.txt',object['EBLratio'])
     str+="""<div></div>"""
 
     ### Weekly:
     
     str+="""<center><img src="{0}"> </center>""".format(object['filename_100_weekly']+'.png')
     str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_100_weekly']+'.txt')
+    str+=make_LAT_flux_table(object['filename_100_weekly']+'.txt',object['EBLratio'])
     str+="""<div></div>"""
     #############################################################
 
@@ -387,7 +418,7 @@ def make_individual_HTML(object_dict):
     
     str+="""<center><img src="{0}"> </center>""".format(object['filename_1000_daily']+'.png')
     str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_1000_daily']+'.txt')
+    str+=make_LAT_flux_table(object['filename_1000_daily']+'.txt',object['EBLratio'])
     str+="""<div></div>"""
 
 
@@ -395,7 +426,7 @@ def make_individual_HTML(object_dict):
     
     str+="""<center><img src="{0}"> </center>""".format(object['filename_1000_weekly']+'.png')
     str+="""<div></div>"""
-    str+=make_LAT_flux_table(object['filename_1000_weekly']+'.txt')
+    str+=make_LAT_flux_table(object['filename_1000_weekly']+'.txt',object['EBLratio'])
     str+="""<div></div>"""
 
     #############################################################
