@@ -146,9 +146,7 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
                 Weekly: {4:.2f} <br><br>
                 <u> Flux_1000_300000</u>:<br>
                 Daily:  {5:.2f} <br>
-                Weekly: {6:.2f} <br><br>
-                <u> EBL corrected crab fraction</u>:<br>
-                Frac: {7:4.2f} 
+                Weekly: {6:.2f} 
 
                 
                 """.format(objdict['name'],
@@ -157,8 +155,7 @@ def make_main_html(objects,updating=False, LATLC_last_site_update=""):
                            objdict['last_100_daily'][5],
                            objdict['last_100_weekly'][5],
                            objdict['last_1000_daily'][5],
-                           objdict['last_1000_weekly'][5],
-                           objdict['ExtrapCrabEBL'])
+                           objdict['last_1000_weekly'][5])
                            
                            
 
