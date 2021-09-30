@@ -231,7 +231,11 @@ class Cat3FGL:
 
 
     def calc_int_absorbed_flux_gammapy(self,E_low, E_high,model,redshift):
-        
+        """
+        Calculate EBL absorbed flux
+        E0, Ec, E_low, E_high all in MeV (except for checking if model is out of range, where E_low is in TeV)
+        """
+
         #input in MeV
        
         if not self._selected():
@@ -243,7 +247,7 @@ class Cat3FGL:
 
         # checking for inputs out of range of models and invalid inputs
         try:
-            if ((energy))<min(readbuiltin.energy): 
+            if energy<min(readbuiltin.energy): 
                     print("ENERGY OUT OF RANGE FOR MODEL "+str(model)+", min energy="+str(min(readbuiltin.energy)))
         except TypeError:
             print("INCORRECT ENERGY INPUT. See help(EBLAbsorption().absorption)")
@@ -258,6 +262,7 @@ class Cat3FGL:
             
 
         #calculating absorbed flux
+
         selfmodel=self.tbdata['SpectrumType'][self.index]
         try:
             if selfmodel=="PowerLaw":
@@ -366,14 +371,6 @@ if __name__ == "__main__":
  
 #######################BACK TO SAME#####################################
     cfg = parser.parse_args()
-
-
-    cfg = parser.parse_args()
-
-
-###############################################################################
-
-
 
     if cfg.download:
         remote_loc="https://fermi.gsfc.nasa.gov/ssc/data/access/lat/4yr_catalog/"
