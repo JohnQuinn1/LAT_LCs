@@ -10,6 +10,8 @@ from collections import OrderedDict
 import numpy
 import json
 import Cat3FGL
+import astropy.units as u
+
 
 
 
@@ -179,32 +181,46 @@ for object in objects:
     #### 3FGL:
 
     LAT3FGL=Cat3FGL.Cat3FGL()
+    
 
     if not LAT3FGL.select_object(object):
         objects[object]['3FGL_spec_type']=""
-        objects[object]['3FGL_PL_index']="{:.2f}".format(-1)
+        objects[object]['3FGL_PL_index']="{:.2f}".format(-1) 	
         objects[object]['3FGL_flux_100']=-1
         objects[object]['3FGL_flux_1000']=-1
         objects[object]['3FGL_flux_gt200GeV']=-1
         objects[object]['3FGL_frac_gt200GeV']=-1
+        objects[object]['3FGL_EBL_abs']=-1 
+        objects[object]['ExtrapCrabEBL']=-1
+        objects[object]['EBLratio']=-1
     else:
         objects[object]['3FGL_spec_type']=LAT3FGL.get_SpectrumType()
+        z=float(objects[object]['z'])
         if objects[object]['3FGL_spec_type']=="PowerLaw":
             objects[object]['3FGL_PL_index']="{:.2f}".format(LAT3FGL.get_field('Spectral_Index'))
             objects[object]['3FGL_flux_100']=LAT3FGL.calc_PL_int_flux(100,300000)
             objects[object]['3FGL_flux_1000']=LAT3FGL.calc_PL_int_flux(1000,300000)
-            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)
-            objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)/2.36e-10
+            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_PL_int_flux(2e5,2e7)  
+            objects[object]['3FGL_frac_gt200GeV']=(LAT3FGL.calc_PL_int_flux(2e5,2e7)/2.36e-10)*u.Unit('cm^2 s') #making fraction dimesionless
+            objects[object]['3FGL_EBL_abs']=LAT3FGL.calc_int_absorbed_flux_gammapy(200000,20000000,'franceschini',z) 
+            DimlessEBL=(LAT3FGL.calc_int_absorbed_flux_gammapy(200000,20000000,'franceschini',z)).item()
+            objects[object]['EBLratio']=LAT3FGL.calc_PL_int_flux(2e5,2e7)/DimlessEBL
+            objects[object]['ExtrapCrabEBL']=(((DimlessEBL)/2.36e-10)*u.Unit('cm^2 s'))
+            
+            
         else:
             objects[object]['3FGL_PL_index']=""
-            objects[object]['3FGL_flux_100']=LAT3FGL.calc_int_flux(100,300000)
-            objects[object]['3FGL_flux_1000']=LAT3FGL.calc_int_flux(1000,300000)
-            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)
-            objects[object]['3FGL_frac_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10
-    
+            objects[object]['3FGL_flux_100']=LAT3FGL.calc_int_flux(100,300000)*u.Unit('cm^-2 s^-1') 
+            objects[object]['3FGL_flux_1000']=LAT3FGL.calc_int_flux(1000,300000)*u.Unit('cm^-2 s^-1') 
+            objects[object]['3FGL_flux_gt200GeV']=LAT3FGL.calc_int_flux(2e5,2e7)*u.Unit('cm^-2 s^-1')          
+            objects[object]['3FGL_frac_gt200GeV']=(LAT3FGL.calc_int_flux(2e5,2e7)/2.36e-10)#*u.Unit('cm^2 s') #making fraction dimesionless
+            objects[object]['3FGL_EBL_abs']=LAT3FGL.calc_int_absorbed_flux_gammapy(200000,20000000,'franceschini',z)
+            DimlessEBL=(LAT3FGL.calc_int_absorbed_flux_gammapy(200000,20000000,'franceschini',z)).item()
+            DimlessCalcIntFlux=LAT3FGL.calc_int_flux(2e5,2e7)/u.Unit('cm^2 s')
+            objects[object]['EBLratio']=DimlessCalcIntFlux/DimlessEBL #ratio of flux before to flux after EBL 
+            objects[object]['ExtrapCrabEBL']=(((DimlessEBL)/2.36e-10)*u.Unit('cm^2 s'))
 
-#    print(objects[object])
-
+               
     ##### Swift:
     
     try:
