@@ -233,7 +233,7 @@ class Cat3FGL:
     def calc_int_absorbed_flux_gammapy(self,E_low, E_high,model,redshift):
         """
         Calculate EBL absorbed flux
-        E0, Ec, E_low, E_high all in MeV (except for checking if model is out of range, where E_low is in TeV)
+        E0, Ec, E_low, E_high all in MeV
         """
 
         #input in MeV
@@ -242,7 +242,7 @@ class Cat3FGL:
             print("no object is selected, please use -n option to select an object")
             return None
         
-        energy=E_low*u.TeV
+        energy=E_low*u.MeV
         readbuiltin=EBLAbsorptionNormSpectralModel.read_builtin(model)
 
         # checking for inputs out of range of models and invalid inputs
