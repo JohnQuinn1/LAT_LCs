@@ -334,6 +334,11 @@ def map_name(name, format="3FGL_ASSOC1"):
                     "Swift_LC":"B21420+32",
                     "LAT_LC":"OQ334"})
 
+    objects.append({"accepted":["PKS 1413+135","PKS B1413+135"],
+                    "3FGL_ASSOC1":"PKS B1413+135",
+                    "Swift_LC":"PKS1413+135",
+                    "LAT_LC":"PKS1413+135"})
+
 
 
 # 4C+50.11 not in 3FGL!
