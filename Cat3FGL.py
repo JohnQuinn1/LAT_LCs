@@ -5,7 +5,7 @@ import numpy as np
 import astropy.units as u
 
 
-#hdulist = fits.open("gll_psc_v16.fit")                                                                                                                
+#hdulist = fits.open("gll_psc_v16.fit")
 # np.count_nonzero(c.tbdata['SpectrumType'] == "PowerLaw")
 # 2523
 #
@@ -40,7 +40,7 @@ class Cat3FGL:
         the environment variable LAT3FGLCAT must be set with
         the path and name of 3FGL FITS file..
 
-        Note: some of the field names in the FITS file do not match the 
+        Note: some of the field names in the FITS file do not match the
         descriptions at https://heasarc.gsfc.nasa.gov/W3Browse/fermi/fermilpsc.html,
         for example: web site: 'Flux_0p3_1_GeV' is 'Flux300_1000' in the FITS file.
 
@@ -51,22 +51,22 @@ class Cat3FGL:
         self.index=None
         self.quiet=quiet
 
-        # suppress warnings from scipy numerical integration 
+        # suppress warnings from scipy numerical integration
         if quiet:
             import warnings
-            warnings.filterwarnings("ignore")            
+            warnings.filterwarnings("ignore")
 
         if os.path.isfile(Cat3FGL.catalogue_default):
             self.catalogue=Cat3FGL.catalogue_default
         else:
-            self.catalogue=os.environ.get('CAT3FGL')           
+            self.catalogue=os.environ.get('CAT3FGL')
             if self.catalogue is None:
                 if not self.quiet:
                     print("No {} and environment variable CAT3FGL not set - exiting"
                           .format(Cat3FGL.catalogue_default))
                 sys.exit(1) # update to throw exception
 
-            
+
         try:
             self.hdulist = fits.open(self.catalogue)
         except:
@@ -90,7 +90,7 @@ class Cat3FGL:
 
     def select_object(self, name, field="ASSOC1"):
         """
-        Find object by Associated name (e.g. Mkn 421) or 3FLGID (field="Source_Name"). 
+        Find object by Associated name (e.g. Mkn 421) or 3FLGID (field="Source_Name").
         Note: case and whitespace insensitive
         """
 
@@ -124,7 +124,7 @@ class Cat3FGL:
             self.spectral_model = lambda E: K*(E/E0)**(-Gamma)
             global beta
             global alpha, Ec
-       
+
 
         elif self.tbdata['SpectrumType'][i]=="LogParabola":
             K=self.tbdata['Flux_Density'][i]
@@ -135,8 +135,8 @@ class Cat3FGL:
 
         # elif self.tbdata['SpectrumType']=="PLExpCutoff":
         # I gather "PLExpCutoff" and "PLSuperExpCutoff" distinguished via parameters:
-        
-        else:  
+
+        else:
             K=self.tbdata['Flux_Density'][i]
             Gamma=self.tbdata['Spectral_Index'][i]
             E0=self.tbdata['Pivot_Energy'][i]
@@ -160,7 +160,7 @@ class Cat3FGL:
         """
         Return a given field - field should be passed as a string.
         Most useful:'Source_Name', 'SpectrumType', 'Spectral_Index', 'Powerlaw_Index',
-        'Pivot_Energy', 'Flux_Density', 'Flux300_1000', 
+        'Pivot_Energy', 'Flux_Density', 'Flux300_1000',
         see: https://fermi.gsfc.nasa.gov/ssc/data/access/lat/4yr_catalog/
         """
 
@@ -172,39 +172,39 @@ class Cat3FGL:
         """
         Return the calculated integral flux between two energies based on powerlaw model
         if the spectrum type is a PowerLaw
-        """ 
-        
+        """
+
         if not self._selected():
             return -1
 
         if not self.tbdata['SpectrumType'][self.index]=='PowerLaw':
             return -2
-        
+
 
         E_pivot=self.tbdata['Pivot_Energy'][self.index]
         gamma=self.tbdata['Powerlaw_Index'][self.index]
         C=self.tbdata['Flux_Density'][self.index]
-       
+
         resultPL=C/(1-gamma)*(E_high_MeV**(1-gamma) - E_low_MeV**(1-gamma)) / E_pivot**(-gamma)
         resultPLunits = resultPL*u.Unit('cm-2 s-1') #adding proper units
         return resultPLunits
-        
+
 
 
     def calc_int_flux(self, E_low_MeV, E_high_MeV):
         """
         Return the calculated integral flux between two by numerically integrating the best-fit model
-        """ 
+        """
 
         if not self._selected():
             return -1
 
-        
+
         import scipy.integrate as integrate
         result=integrate.quad(self.spectral_model,E_low_MeV, E_high_MeV)
-        
+
         return result[0]
-        
+
 
 
     def get_field_names(self):
@@ -225,7 +225,7 @@ class Cat3FGL:
 
         if self._selected():
             return self.tbdata['SpectrumType'][self.index]
-        
+
 ##################################EBL########################################
 
 
@@ -237,17 +237,17 @@ class Cat3FGL:
         """
 
         #input in MeV
-       
+
         if not self._selected():
             print("no object is selected, please use -n option to select an object")
             return None
-        
+
         energy=E_low*u.MeV
         readbuiltin=EBLAbsorptionNormSpectralModel.read_builtin(model)
 
         # checking for inputs out of range of models and invalid inputs
         try:
-            if energy<min(readbuiltin.energy): 
+            if energy<min(readbuiltin.energy):
                     print("ENERGY OUT OF RANGE FOR MODEL "+str(model)+", min energy="+str(min(readbuiltin.energy)))
         except TypeError:
             print("INCORRECT ENERGY INPUT. See help(EBLAbsorption().absorption)")
@@ -258,8 +258,8 @@ class Cat3FGL:
         #except TypeError:
             #print("INCORRECT REDSHIFT INPUT. See help(EBLAbsorption().absorption)")
             #return(None)
-            
-            
+
+
 
         #calculating absorbed flux
 
@@ -274,7 +274,7 @@ class Cat3FGL:
            #a=gammapy.modeling.models.AbsorbedSpectralModel(var,Absorption.read_builtin(model),float(redshift)) original line
 
             absorption=gammapy.modeling.models.EBLAbsorptionNormSpectralModel.read_builtin(model,redshift=float(redshift)) #edited this line for gammapy0.18.2
-            a = var * absorption 
+            a = var * absorption
             EBL=a.integral(float(E_low)*u.MeV,float(E_high)*u.MeV)
             #print(EBL.to(u.Unit('cm-2 s-1')))
             return(EBL.to(u.Unit('cm-2 s-1')))
@@ -287,7 +287,7 @@ class Cat3FGL:
             #print("something went wrong while calculating integral flux")
             #return None
 
-            
+
 ###########################BACK TO SAME###############################################
 
 if __name__ == "__main__":
@@ -308,10 +308,10 @@ if __name__ == "__main__":
          Direct link: https://fermi.gsfc.nasa.gov/ssc/data/access/lat/4yr_catalog/gll_psc_v16.fit
          Note: some of the field names in the FITS file do not match the descriptions on the
          web site: for example: web site: 'Flux_0p3_1_GeV' is 'Flux300_1000' in the FITS file. What is
-         FLUX1000 in the FITS file?? 
+         FLUX1000 in the FITS file??
          """
 
-    parser = argparse.ArgumentParser(description=desc, 
+    parser = argparse.ArgumentParser(description=desc,
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('-d','--download', action='store_true',
@@ -320,8 +320,8 @@ if __name__ == "__main__":
     parser.add_argument('-N','--Name_field', type=str, default="ASSOC1",
                         help="Specify name field to use: 'Source_Name', 'ASSOC1', etc.")
 
-    parser.add_argument('-n','--name',type=str, default="", 
-                        help="""Select object by name. Name field selected with option -N. 
+    parser.add_argument('-n','--name',type=str, default="",
+                        help="""Select object by name. Name field selected with option -N.
                                 Need another option as well to print some field""")
 
 
@@ -344,31 +344,31 @@ if __name__ == "__main__":
                         help="prints the spectral type: either PowerLaw, LogParabola, or PLExpCutoff.")
 
 
-    parser.add_argument('-I','--integral_flux', 
-                        type=float, 
-                        nargs=2, 
+    parser.add_argument('-I','--integral_flux',
+                        type=float,
+                        nargs=2,
                         metavar=("E_lower_MeV","E_upper_MeV"),
                         help=("print the best-model numerically integrated flux (ph cm^-2 s^-1) in energy range"))
 
-    parser.add_argument('-P','--PL_integral_flux', 
-                        type=float, 
-                        nargs=2, 
+    parser.add_argument('-P','--PL_integral_flux',
+                        type=float,
+                        nargs=2,
                         metavar=("E_lower_MeV","E_upper_MeV"),
                         help=("print the PL-calculated integrated flux (ph cm^-2 s^-1) in energy range"))
 
 ######################## EBL ######################################
-    parser.add_argument('-IGA','--integral_absorbed_flux_gammapy', 
+    parser.add_argument('-IGA','--integral_absorbed_flux_gammapy',
                         nargs=3,
                         type=float,
                         metavar=("E_lower_MeV","E_upper_MeV", "redshift_z"),
                         help=("print the best-model numerically integrated flux (ph cm^-2 s^-1) in energy range. energy input in MeV. choose model using -m option (default is 'franceschini)')"))
-    
+
     parser.add_argument('-m','--model',
                         type=str,
                         choices=['franceschini','dominguez','finke'],
                         default='franceschini',
                         help="choose absorption model. default is 'franceschini'")
- 
+
 #######################BACK TO SAME#####################################
     cfg = parser.parse_args()
 
@@ -380,7 +380,7 @@ if __name__ == "__main__":
             sys.exit(1)
         remote_file=remote_loc+file
         print("Downloading:",remote_file)
-    
+
         try:
             from urllib.error import HTTPError # just so I can catch and handle this exception
             x=wget.download(remote_file, bar=wget.bar_adaptive)
@@ -415,7 +415,7 @@ if __name__ == "__main__":
     if cfg.all_fields:
         field_names=cat.get_field_names()
         fields=cat.get_all_fields()
-    
+
         for i in range(len(fields)):
             print("{:20s}: {}".format(field_names[i],fields[i]))
 
@@ -442,11 +442,7 @@ if __name__ == "__main__":
 ################################## EBL ###########################################
     if cfg.model:
         chosenmodel=cfg.model
-       
-        
+
+
     if cfg.integral_absorbed_flux_gammapy:
         print(cat.calc_int_absorbed_flux_gammapy(cfg.integral_absorbed_flux_gammapy[0], cfg.integral_absorbed_flux_gammapy[1],chosenmodel,cfg.integral_absorbed_flux_gammapy[2]))
-
-
-
-
