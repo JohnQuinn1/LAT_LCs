@@ -204,10 +204,14 @@ i_ul=np.where(ulf==True)
 
 #############################################################
 
-import Cat3FGL
-cat=Cat3FGL.Cat3FGL(quiet=cfg.quiet)
-in_3FGL=cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
+try:
+    import Cat3FGL
+    cat=Cat3FGL.Cat3FGL(quiet=cfg.quiet)
+    in_3FGL=cat.select_object(map_name.map_name(cfg.name,"3FGL_ASSOC1"))
+except:
+    in_3FGL = False
 
+    
 if in_3FGL:
 
     if F=='FLUX_100_300000':
