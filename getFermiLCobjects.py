@@ -143,7 +143,7 @@ def filter(RA, Dec, z, cfg):
 ############################################################################################
 
 import sys
-from astroquery.ned import Ned
+from astroquery.ipac.ned import Ned
 from astroquery.exceptions import RemoteServiceError
 from astroquery.exceptions import TimeoutError
 

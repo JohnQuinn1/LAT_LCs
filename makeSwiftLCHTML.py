@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil.parser import parse
 
-# This script makes a file on disk called: Swift_LCs.html
+# This script makes a file on disk called: Swift_LCs.html or as given on command line 
 
 
 ############################################################################################
@@ -72,7 +72,7 @@ def get_last_cts(name):
     name=name.replace(" ","")
     # Swift new data folder "data_new" instead of "data" in November 2018
     LC_URL="https://www.swift.psu.edu/monitoring/data_new/"+name+"/lightcurve.txt"
-    r=requests.get(LC_URL, verify=False)
+    r=requests.get(LC_URL)
     lines=r.text.split("\n")
     # 23 line header + blank line at end - make sure at least two data lines
     if len(lines)>25: 
@@ -154,7 +154,7 @@ def make_html_string(data, get_cts=True):
 
 
 URL="https://www.swift.psu.edu/monitoring/"
-page=requests.get(URL,verify=False)
+page=requests.get(URL)
 soup=BeautifulSoup(page.content,'lxml')
 table=soup.findAll("table")
 
